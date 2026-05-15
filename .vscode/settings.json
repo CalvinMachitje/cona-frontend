@@ -1,0 +1,7 @@
+// root/.vscode/settings.json
+{
+  "deno.enable": false,
+  "deno.enablePaths": ["supabase/functions"],
+  
+  "typescript.validate.enable": true
+}
