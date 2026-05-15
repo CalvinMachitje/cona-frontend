@@ -10,6 +10,7 @@ import venue4 from "@/assets/Cona images/inside_view4.webp";
 import venue5 from "@/assets/Cona images/inside_view5.webp";
 import venue6 from "@/assets/Cona images/inside_view6.webp";
 import venue7 from "@/assets/Cona images/staff.webp";
+import venue8 from "@/assets/Cona images/Owner.jpg";
 
 // Drinks
 import drink1 from "@/assets/cocktail.jpg";
@@ -34,6 +35,7 @@ const galleryImages = [
   { src: venue5, alt: "Dance Floor", category: "venue" },
   { src: venue6, alt: "Live Music Stage", category: "venue" },
   { src: venue7, alt: "Friendly Staff", category: "venue" },
+  { src: venue8, alt: "Owner's Welcome", category: "venue" },
 
   // Drinks
   { src: drink1, alt: "Premium Cocktails", category: "drinks" },

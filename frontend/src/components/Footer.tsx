@@ -100,12 +100,19 @@ export function Footer() {
           <h4 className="text-xs uppercase tracking-[0.3em] text-primary mb-4">
             Contact
           </h4>
+
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <MapPin size={14} className="text-primary mt-1" />
-              <span>
+
+              <a
+                href="https://www.google.com/maps?q=-26.328283,26.315334"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
                 Coligny, 2725
-              </span>
+              </a>
             </li>
 
             <li className="flex items-center gap-2">
