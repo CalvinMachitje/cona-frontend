@@ -213,7 +213,7 @@ export default function About() {
             transition={{ duration: 0.7 }}
             className="font-display text-2xl sm:text-3xl md:text-4xl leading-tight md:leading-relaxed max-w-3xl mx-auto"
           >
-            "Great food, chilled drinks, and unforgettable moments at{" "}
+            "Great food, chilled drinks, and unforgettable moments at
             <span className="text-primary">CONA Lounge</span>."
           </motion.blockquote>
         </section>
