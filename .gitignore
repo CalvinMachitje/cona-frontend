@@ -113,3 +113,4 @@ dump.rdb
 seed-data.json
 test-data.json
 *.seed.json
+node_modules
