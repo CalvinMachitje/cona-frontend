@@ -148,3 +148,8 @@
     -webkit-backdrop-filter: blur(16px);
   }
 }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px; 
+}
