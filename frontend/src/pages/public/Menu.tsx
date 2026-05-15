@@ -2,90 +2,10 @@
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import NeonBackground from "@/components/NeonBackground";
+
 import cocktailImg from "@/assets/cocktail.jpg";
 import diningImg from "@/assets/dining.jpg";
-
-// Mobile Navigation (Same as About page)
-const MobileNav = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const navLinks = [
-    { name: "Home", href: "#home" },
-    { name: "About", href: "#about" },
-    { name: "Menu", href: "#menu" },
-    { name: "Contact", href: "#contact" },
-  ];
-
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800">
-      <div className="container mx-auto px-5 py-4 flex items-center justify-between">
-        <div className="font-display text-3xl tracking-tight text-primary">CONA</div>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className="hover:text-primary transition-colors duration-200"
-              onClick={() =>
-                document.querySelector(link.href)?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              {link.name}
-            </a>
-          ))}
-        </div>
-
-        {/* Mobile Hamburger */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden w-10 h-10 flex items-center justify-center focus:outline-none"
-          aria-label="Toggle menu"
-        >
-          <div className="space-y-1.5">
-            <span
-              className={`block h-0.5 w-6 bg-white transition-all duration-300 ${
-                isOpen ? "rotate-45 translate-y-2" : ""
-              }`}
-            />
-            <span
-              className={`block h-0.5 w-6 bg-white transition-all duration-300 ${
-                isOpen ? "opacity-0" : ""
-              }`}
-            />
-            <span
-              className={`block h-0.5 w-6 bg-white transition-all duration-300 ${
-                isOpen ? "-rotate-45 -translate-y-2" : ""
-              }`}
-            />
-          </div>
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden fixed inset-0 bg-zinc-950 z-40 pt-20">
-          <div className="flex flex-col items-center gap-10 text-2xl py-12">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="hover:text-primary transition-colors"
-                onClick={() => {
-                  setIsOpen(false);
-                  document.querySelector(link.href)?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                {link.name}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </nav>
-  );
-};
 
 const menuSections = [
   {
@@ -142,7 +62,8 @@ export default function Menu() {
 
   return (
     <>
-      <MobileNav />
+      {/* 3D Neon Background */}
+      <NeonBackground primaryColor="#22d3ee" />
 
       <div className="min-h-screen bg-[#0a0a0a] text-white pt-20">
         {/* Header */}
