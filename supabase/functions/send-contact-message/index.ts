@@ -73,8 +73,7 @@ async function sendEmail(payload: {
 
   console.log("Resend success:", result);
 }
-
-export default async function handler(req: Request): Promise<Response> {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -83,14 +82,19 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
+    console.log("Function started");
+
     const body = await req.json();
+    console.log("Request body parsed");
+
     const { name, email, subject, message, recaptchaToken } = body;
 
     if (!name || !email || !subject || !message || !recaptchaToken) {
       throw new Error("Missing required fields");
     }
 
-    // Verify captcha
+    console.log("Validating captcha...");
+
     const captchaRes = await fetch(
       "https://www.google.com/recaptcha/api/siteverify",
       {
@@ -106,16 +110,20 @@ export default async function handler(req: Request): Promise<Response> {
     );
 
     const captchaData = await captchaRes.json();
+    console.log("Captcha response:", captchaData);
 
     if (!captchaData.success) {
       throw new Error("Captcha verification failed");
     }
 
-    // Save to database
+    console.log("Creating Supabase client...");
+
     const supabase = createClient(
       env.SUPABASE_URL,
       env.SUPABASE_SERVICE_ROLE_KEY
     );
+
+    console.log("Saving contact message...");
 
     const { data, error } = await supabase
       .from("contact_messages")
@@ -123,7 +131,10 @@ export default async function handler(req: Request): Promise<Response> {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Database error:", error);
+      throw new Error(error.message);
+    }
 
     // Admin notification
     await sendEmail({
@@ -186,4 +197,4 @@ CONA Lounge Team
       }
     );
   }
-}
+});
