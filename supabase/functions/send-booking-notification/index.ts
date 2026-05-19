@@ -1,4 +1,5 @@
 // supabase/functions/send-booking-notification/index.ts
+
 import { createClient } from "@supabase/supabase-js";
 import { env } from "../_shared/env.ts";
 
@@ -10,11 +11,91 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
+const isDevelopment =
+  (env as any).APP_ENV === "development" ||
+  (env as any).DENO_ENV === "development";
+
+async function sendEmail(payload: {
+  to: string[];
+  subject: string;
+  text: string;
+}) {
+  // =========================
+  // DEV MODE (Mailtrap)
+  // =========================
+  if (isDevelopment) {
+    console.log("Using Mailtrap (development mode)");
+
+    try {
+      const response = await fetch(
+        "https://send.api.mailtrap.io/api/send",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.MAILTRAP_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: {
+              email: env.FROM_EMAIL,
+              name: env.FROM_NAME,
+            },
+            to: payload.to.map((email) => ({ email })),
+            subject: payload.subject,
+            text: payload.text,
+          }),
+        }
+      );
+
+      const result = await response.text();
+
+      if (!response.ok) {
+        console.error("Mailtrap error:", result);
+
+        // ❗ DO NOT crash function
+        return;
+      }
+
+      console.log("Mailtrap success:", result);
+    } catch (err) {
+      console.error("Mailtrap exception:", err);
+    }
+
+    return;
+  }
+
+  // =========================
+  // PROD MODE (Resend)
+  // =========================
+  console.log("Using Resend (production mode)");
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: `${env.FROM_NAME} <${env.FROM_EMAIL}>`,
+      to: payload.to,
+      subject: payload.subject,
+      text: payload.text,
+    }),
+  });
+
+  const result = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Resend failed: ${result}`);
+  }
+
+  console.log("Resend success:", result);
+}
+
 Deno.serve(async (req: Request) => {
-  // Handle preflight request FIRST
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
+    return new Response(null, {
+      status: 204,
       headers: corsHeaders,
     });
   }
@@ -25,17 +106,10 @@ Deno.serve(async (req: Request) => {
     const { booking_id } = await req.json();
 
     if (!booking_id) {
-      return new Response(
-        JSON.stringify({ error: "booking_id is required" }),
-        {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      throw new Error("booking_id is required");
     }
+
+    console.log("Fetching booking...");
 
     const supabase = createClient(
       env.SUPABASE_URL,
@@ -52,19 +126,11 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (error || !booking) {
-      return new Response(
-        JSON.stringify({ error: "Booking not found" }),
-        {
-          status: 404,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      throw new Error("Booking not found");
     }
 
     const table = booking.tables;
+
     const bookingDate = new Date(
       booking.booking_date
     ).toLocaleDateString("en-ZA");
@@ -87,26 +153,14 @@ CONA Lounge Team
 Coligny • 083 200 2516
     `.trim();
 
-    const emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: `${env.FROM_NAME} <${env.FROM_EMAIL}>`,
-        to: [booking.guest_email],
-        subject: `Confirmed: Table ${table?.table_number} on ${bookingDate}`,
-        text: message,
-      }),
+    // =========================
+    // EMAIL (SAFE CALL)
+    // =========================
+    await sendEmail({
+      to: [booking.guest_email],
+      subject: `Confirmed: Table ${table?.table_number} on ${bookingDate}`,
+      text: message,
     });
-
-    const emailText = await emailRes.text();
-    console.log("Email response:", emailText);
-
-    if (!emailRes.ok) {
-      throw new Error(`Email failed: ${emailText}`);
-    }
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -118,18 +172,11 @@ Coligny • 083 200 2516
         },
       }
     );
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : typeof err === "string"
-        ? err
-        : "Unknown error";
-
-    console.error("Booking function error:", message);
+  } catch (err: any) {
+    console.error("Booking function error:", err);
 
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: err.message }),
       {
         status: 500,
         headers: {

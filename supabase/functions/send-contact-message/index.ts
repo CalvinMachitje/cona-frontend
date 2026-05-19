@@ -23,10 +23,10 @@ async function sendEmail(payload: {
 
     const response = await fetch("https://send.api.mailtrap.io/api/send", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${(env as any).MAILTRAP_TOKEN}`,
-        "Content-Type": "application/json",
-      },
+        headers: {
+          Authorization: `Bearer ${env.MAILTRAP_TOKEN}`,
+          "Content-Type": "application/json",
+        },
       body: JSON.stringify({
         from: {
           email: env.FROM_EMAIL,
@@ -49,6 +49,7 @@ async function sendEmail(payload: {
     return;
   }
 
+  // Production - Resend
   console.log("Using Resend (production mode)");
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -73,6 +74,7 @@ async function sendEmail(payload: {
 
   console.log("Resend success:", result);
 }
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -164,6 +166,7 @@ We have received your message and will respond within 24 hours.
 
 Best regards,
 CONA Lounge Team
+Coligny • 083 200 2516
       `.trim(),
     });
 
