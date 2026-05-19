@@ -1,6 +1,7 @@
 // frontend/src/pages/contact.tsx
 import { motion } from "framer-motion";
 import { useState, useRef } from "react";
+import type { ComponentType } from "react";
 import { MapPin, Phone, Mail, Clock, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +21,24 @@ interface FormErrors {
   email?: string;
   subject?: string;
   message?: string;
+}
+
+interface InputFieldProps {
+  label: string;
+  name: keyof FormData;
+  type: string;
+  value: string;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
+  error?: string;
+  required?: boolean;
+}
+
+interface InfoCardProps {
+  icon: ComponentType<any>;
+  title: string;
+  lines: string[];
 }
 
 export default function ContactPage() {
@@ -48,9 +67,7 @@ export default function ContactPage() {
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    ) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
@@ -92,6 +109,9 @@ export default function ContactPage() {
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setSubmitError("");
 
     if (!validateForm()) return;
@@ -116,7 +136,11 @@ export default function ContactPage() {
         }
       );
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(
+          error.message || "Unable to send message."
+        );
+      }
 
       setSent(true);
 
@@ -128,10 +152,13 @@ export default function ContactPage() {
       });
 
       recaptchaRef.current?.reset();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Contact form error:", err);
+
       setSubmitError(
-        err.message || "Unable to send message. Please try again."
+        err instanceof Error
+          ? err.message
+          : "Unable to send message. Please try again."
       );
     } finally {
       setLoading(false);
@@ -275,7 +302,11 @@ export default function ContactPage() {
                     rows={6}
                     required
                     placeholder="Tell us more about your inquiry..."
-                    className="w-full bg-zinc-950 border border-zinc-700 rounded-2xl py-4 px-5 text-white focus:outline-none focus:border-primary resize-y"
+                    className={`w-full bg-zinc-950 border ${
+                      errors.message
+                        ? "border-red-500"
+                        : "border-zinc-700 focus:border-primary"
+                    } rounded-2xl py-4 px-5 text-white focus:outline-none transition resize-y`}
                   />
 
                   {errors.message && (
@@ -316,8 +347,8 @@ function InputField({
   value,
   onChange,
   error,
-  required,
-}: any) {
+  required = false,
+}: InputFieldProps) {
   return (
     <div>
       <label className="block text-sm text-zinc-400 mb-2">
@@ -344,7 +375,11 @@ function InputField({
   );
 }
 
-function InfoCard({ icon: Icon, title, lines }: any) {
+function InfoCard({
+  icon: Icon,
+  title,
+  lines,
+}: InfoCardProps) {
   return (
     <div className="flex gap-5 bg-zinc-900 border border-zinc-800 hover:border-primary/50 transition-colors rounded-3xl p-8 group">
       <div className="w-14 h-14 shrink-0 rounded-2xl bg-zinc-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
@@ -356,7 +391,7 @@ function InfoCard({ icon: Icon, title, lines }: any) {
           {title}
         </h3>
 
-        {lines.map((line: string, i: number) => (
+        {lines.map((line, i) => (
           <p key={i} className="text-zinc-400 leading-relaxed">
             {line}
           </p>

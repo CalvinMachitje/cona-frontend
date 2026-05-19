@@ -10,7 +10,71 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
-Deno.serve(async (req: Request) => {
+const isDevelopment =
+  (env as any).APP_ENV === "development" || (env as any).DENO_ENV === "development";
+
+async function sendEmail(payload: {
+  to: string[];
+  subject: string;
+  text: string;
+}) {
+  if (isDevelopment) {
+    console.log("Using Mailtrap (development mode)");
+
+    const response = await fetch("https://send.api.mailtrap.io/api/send", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${(env as any).MAILTRAP_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: {
+          email: env.FROM_EMAIL,
+          name: env.FROM_NAME,
+        },
+        to: payload.to.map((email) => ({ email })),
+        subject: payload.subject,
+        text: payload.text,
+        category: "Development Testing",
+      }),
+    });
+
+    const result = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`Mailtrap failed: ${result}`);
+    }
+
+    console.log("Mailtrap success:", result);
+    return;
+  }
+
+  console.log("Using Resend (production mode)");
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: `${env.FROM_NAME} <${env.FROM_EMAIL}>`,
+      to: payload.to,
+      subject: payload.subject,
+      text: payload.text,
+    }),
+  });
+
+  const result = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Resend failed: ${result}`);
+  }
+
+  console.log("Resend success:", result);
+}
+
+export default async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -19,19 +83,14 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    console.log("Function started");
-
     const body = await req.json();
-    console.log("Request body parsed");
-
     const { name, email, subject, message, recaptchaToken } = body;
 
     if (!name || !email || !subject || !message || !recaptchaToken) {
       throw new Error("Missing required fields");
     }
 
-    console.log("Validating captcha...");
-
+    // Verify captcha
     const captchaRes = await fetch(
       "https://www.google.com/recaptcha/api/siteverify",
       {
@@ -47,20 +106,16 @@ Deno.serve(async (req: Request) => {
     );
 
     const captchaData = await captchaRes.json();
-    console.log("Captcha response:", captchaData);
 
     if (!captchaData.success) {
       throw new Error("Captcha verification failed");
     }
 
-    console.log("Creating Supabase client...");
-
+    // Save to database
     const supabase = createClient(
       env.SUPABASE_URL,
       env.SUPABASE_SERVICE_ROLE_KEY
     );
-
-    console.log("Saving contact message...");
 
     const { data, error } = await supabase
       .from("contact_messages")
@@ -68,26 +123,13 @@ Deno.serve(async (req: Request) => {
       .select()
       .single();
 
-    if (error) {
-      console.error("Database error:", error);
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
-    console.log("Sending admin email...");
-
-    const adminEmailResponse = await fetch(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: `${env.FROM_NAME} <${env.FROM_EMAIL}>`,
-          to: ["smachitje36@gmail.com"],
-          subject: `New Contact Form: ${subject}`,
-          text: `
+    // Admin notification
+    await sendEmail({
+      to: ["smachitje36@gmail.com"],
+      subject: `New Contact Form: ${subject}`,
+      text: `
 New contact form received
 
 Name: ${name}
@@ -95,33 +137,14 @@ Email: ${email}
 Subject: ${subject}
 
 ${message}
-          `.trim(),
-        }),
-      }
-    );
+      `.trim(),
+    });
 
-    const adminEmailResult = await adminEmailResponse.text();
-    console.log("Admin email response:", adminEmailResult);
-
-    if (!adminEmailResponse.ok) {
-      throw new Error(`Admin email failed: ${adminEmailResult}`);
-    }
-
-    console.log("Sending customer auto reply...");
-
-    const replyResponse = await fetch(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: `${env.FROM_NAME} <${env.FROM_EMAIL}>`,
-          to: [email],
-          subject: "We've received your message - CONA Lounge",
-          text: `
+    // Customer auto reply
+    await sendEmail({
+      to: [email],
+      subject: "We've received your message - CONA Lounge",
+      text: `
 Hello ${name},
 
 Thank you for contacting CONA Lounge.
@@ -130,17 +153,8 @@ We have received your message and will respond within 24 hours.
 
 Best regards,
 CONA Lounge Team
-          `.trim(),
-        }),
-      }
-    );
-
-    const replyResult = await replyResponse.text();
-    console.log("Customer email response:", replyResult);
-
-    if (!replyResponse.ok) {
-      throw new Error(`Customer email failed: ${replyResult}`);
-    }
+      `.trim(),
+    });
 
     return new Response(
       JSON.stringify({
@@ -159,12 +173,10 @@ CONA Lounge Team
     const errorMessage =
       err instanceof Error ? err.message : "Unknown error";
 
-    console.error("FUNCTION ERROR:", errorMessage);
+    console.error(errorMessage);
 
     return new Response(
-      JSON.stringify({
-        error: errorMessage,
-      }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: {
@@ -174,4 +186,4 @@ CONA Lounge Team
       }
     );
   }
-});
+}

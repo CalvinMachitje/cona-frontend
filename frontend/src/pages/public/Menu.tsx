@@ -1,5 +1,6 @@
 // frontend/src/pages/menu.tsx
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import type { PanInfo } from "framer-motion";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import cocktailImg from "@/assets/cocktail.jpg";
