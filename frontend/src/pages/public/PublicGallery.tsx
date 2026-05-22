@@ -1,4 +1,4 @@
-// frontend/src/pages/PublicGallery.tsx
+// frontend/src/pages/public/PublicGallery.tsx
 import { motion } from "framer-motion";
 import { useState } from "react";
 

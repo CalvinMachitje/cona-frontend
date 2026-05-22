@@ -1,4 +1,4 @@
-// frontend/src/pages/contact.tsx
+// frontend/src/pages/public/Contact.tsx
 import { motion } from "framer-motion";
 import { useState, useRef } from "react";
 import type { ComponentType } from "react";

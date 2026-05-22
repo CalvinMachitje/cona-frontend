@@ -35,6 +35,7 @@ import Settings from "@/pages/admin/settings";
 import Bookings from "@/pages/admin/bookings";
 import Payments from "@/pages/admin/payments";
 import AdminLogin from "@/pages/admin/login";
+import AdminRegister from "@/pages/admin/register";
 
 function App() {
   return (
@@ -62,8 +63,9 @@ function App() {
         <Route path="/member/promotions" element={<Promotions />} />
       </Route>
 
-      {/* Admin Login (public) */}
+      {/* Admin Login & Register (public) */}
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/register" element={<AdminRegister />} />
 
       {/* Protected Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute />}>

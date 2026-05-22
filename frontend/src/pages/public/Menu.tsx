@@ -1,80 +1,182 @@
-// frontend/src/pages/menu.tsx
+// frontend/src/pages/public/Menu.tsx
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PanInfo } from "framer-motion";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
-import cocktailImg from "@/assets/cocktail.jpg";
-import diningImg from "@/assets/dining.jpg";
+import {
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  Star,
+} from "lucide-react";
 
-const menuSections = [
-  {
-    id: 1,
-    title: "Signature Cocktails",
-    emoji: "🍸",
-    image: cocktailImg,
-    items: [
-      { name: "Midnight Sapphire", desc: "Gin, blue curaçao, lemon, edible silver", price: "R22" },
-      { name: "Electric Storm", desc: "Vodka, elderflower, citrus, smoke", price: "R24" },
-      { name: "Velvet Noir", desc: "Bourbon, espresso, dark cacao, vanilla", price: "R23" },
-      { name: "Neon Spritz", desc: "Prosecco, aperol, blood orange, basil", price: "R20" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Fine Dining",
-    emoji: "🍽️",
-    image: diningImg,
-    items: [
-      { name: "Wagyu Tartare", desc: "A5 wagyu, quail egg, truffle, brioche", price: "R38" },
-      { name: "Yellowfin Crudo", desc: "Citrus, avocado, jalapeño, microgreens", price: "R28" },
-      { name: "Black Truffle Risotto", desc: "Carnaroli rice, parmesan, truffle shavings", price: "R34" },
-      { name: "Filet Mignon", desc: "8oz prime, foie gras, red wine reduction", price: "R58" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Bottle Service",
-    emoji: "🍾",
-    image: diningImg,
-    items: [
-      { name: "Dom Pérignon Vintage", desc: "750ml — perfect for celebrations", price: "R350" },
-      { name: "Grey Goose Magnum", desc: "1.5L vodka — includes mixers", price: "R450" },
-      { name: "Macallan 18", desc: "Single malt scotch whisky", price: "R280" },
-      { name: "Cristal Rosé", desc: "Limited release — chef's selection", price: "R690" },
-    ],
-  },
-];
+import { supabase } from "@/lib/supabase";
 
-export default function Menu() {
+type MenuItem = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  is_available: boolean;
+  is_featured: boolean;
+};
+
+type MenuSection = {
+  title: string;
+  image: string;
+  emoji: string;
+  items: MenuItem[];
+};
+
+const categoryEmoji: Record<string, string> = {
+  Cocktails: "🍸",
+  Food: "🍽️",
+  "Bottle Service": "🍾",
+  Wine: "🍷",
+  Beer: "🍺",
+  Shots: "🥃",
+  Desserts: "🍰",
+  General: "✨",
+};
+
+export default function MenuPage() {
+  const [sections, setSections] = useState<MenuSection[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const nextPage = () => setCurrentPage((prev) => (prev + 1) % menuSections.length);
-  const prevPage = () => setCurrentPage((prev) => (prev - 1 + menuSections.length) % menuSections.length);
+  const loadMenu = async () => {
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.functions.invoke(
+        "manage-menu",
+        {
+          body: {
+            action: "get",
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      const rawItems: MenuItem[] = data?.data ?? [];
+
+      // IMPORTANT: only available items shown publicly
+      const items = rawItems.filter(
+        (item) => item?.is_available === true
+      );
+
+      const groupedMap: Record<string, MenuSection> = {};
+
+      for (const item of items) {
+        if (!groupedMap[item.category]) {
+          groupedMap[item.category] = {
+            title: item.category,
+            image:
+              item.image_url ||
+              "https://placehold.co/800x800?text=CONA",
+            emoji: categoryEmoji[item.category] || "🍽️",
+            items: [],
+          };
+        }
+
+        groupedMap[item.category].items.push(item);
+      }
+
+      const grouped = Object.values(groupedMap);
+
+      setSections(grouped);
+      setCurrentPage(0); // reset page when reload
+    } catch (err) {
+      console.error("MENU LOAD ERROR:", err);
+      setSections([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMenu();
+  }, []);
+
+  const nextPage = () => {
+    if (!sections.length) return;
+    setCurrentPage((prev) => (prev + 1) % sections.length);
+  };
+
+  const prevPage = () => {
+    if (!sections.length) return;
+    setCurrentPage(
+      (prev) => (prev - 1 + sections.length) % sections.length
+    );
+  };
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const threshold = 80;
-    if (info.offset.x > threshold) prevPage();
-    else if (info.offset.x < -threshold) nextPage();
+
+    if (!sections.length) return;
+
+    if (info.offset.x > threshold) {
+      prevPage();
+    } else if (info.offset.x < -threshold) {
+      nextPage();
+    }
   };
 
-  const current = menuSections[currentPage];
+  const current = useMemo(
+    () => sections[currentPage],
+    [sections, currentPage]
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        Loading menu...
+      </div>
+    );
+  }
+
+  if (!sections.length) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center text-center px-6">
+        <div>
+          <p className="text-xl font-semibold">
+            No menu items available
+          </p>
+          <p className="text-zinc-400 mt-2">
+            Please check back later.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
-      {/* Header */}
+      {/* HEADER */}
       <div className="pt-20 pb-12 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
           <BookOpen className="w-10 h-10 text-amber-400" />
-          <p className="text-amber-400 text-sm tracking-[0.5em] uppercase">CONA LOUNGE</p>
+
+          <p className="text-amber-400 text-sm tracking-[0.5em] uppercase">
+            CONA LOUNGE
+          </p>
         </div>
-        <h1 className="font-display text-7xl md:text-8xl tracking-tighter">OUR MENU</h1>
-        <p className="text-zinc-400 mt-3">Drag left or right to flip pages</p>
+
+        <h1 className="font-display text-7xl md:text-8xl tracking-tighter">
+          OUR MENU
+        </h1>
+
+        <p className="text-zinc-400 mt-3">
+          Drag left or right to flip pages
+        </p>
       </div>
 
-      {/* Book Container */}
-      <div className="max-w-4xl mx-auto px-6 pb-20">
+      {/* BOOK */}
+      <div className="max-w-5xl mx-auto px-6 pb-20">
         <motion.div
-          className="relative h-[680px] md:h-[740px] perspective-[1800px] mx-auto"
+          className="relative h-[720px] perspective-[1800px]"
           drag="x"
           dragConstraints={{ left: -100, right: 100 }}
           dragElastic={0.2}
@@ -84,104 +186,96 @@ export default function Menu() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPage}
-              initial={{ 
-                opacity: 0, 
-                rotateY: 15, 
-                scale: 0.95 
+              initial={{ opacity: 0, rotateY: 15, scale: 0.95 }}
+              animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+              exit={{ opacity: 0, rotateY: -15, scale: 0.95 }}
+              transition={{
+                duration: 0.7,
+                ease: [0.22, 1, 0.36, 1],
               }}
-              animate={{ 
-                opacity: 1, 
-                rotateY: 0, 
-                scale: 1 
-              }}
-              exit={{ 
-                opacity: 0, 
-                rotateY: -15, 
-                scale: 0.95 
-              }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 rounded-3xl overflow-hidden border border-amber-400/20 bg-zinc-950 shadow-2xl"
-              style={{
-                boxShadow: `
-                  0 60px 100px -20px rgba(0, 0, 0, 0.85),
-                  0 25px 50px -12px rgba(0, 0, 0, 0.6),
-                  inset 0 0 80px rgba(245, 158, 11, 0.06)
-                `,
-              }}
+              className="absolute inset-0 rounded-3xl overflow-hidden border border-amber-400/20 bg-zinc-950"
             >
-              {/* Page Content */}
               <div className="flex h-full">
-                {/* Left Side - Visual */}
-                <div className="w-5/12 bg-black/80 p-8 md:p-12 flex flex-col items-center justify-center relative">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#ffffff0a_0%,transparent_70%)]" />
-                  
-                  <motion.img
+                {/* LEFT */}
+                <div className="w-5/12 bg-black/80 p-10 flex flex-col items-center justify-center">
+                  <img
                     src={current.image}
                     alt={current.title}
-                    className="w-full aspect-square object-cover rounded-2xl shadow-2xl mb-10"
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.8 }}
+                    className="w-full aspect-square object-cover rounded-3xl shadow-2xl mb-8"
                   />
 
-                  <span className="text-7xl mb-6">{current.emoji}</span>
-                  <h2 className="font-display text-5xl md:text-6xl text-center tracking-tight text-amber-300 leading-none">
+                  <span className="text-7xl mb-6">
+                    {current.emoji}
+                  </span>
+
+                  <h2 className="text-5xl text-center font-bold text-amber-300">
                     {current.title}
                   </h2>
                 </div>
 
-                {/* Right Side - Menu Items */}
-                <div className="w-7/12 p-8 md:p-12 bg-zinc-950 flex flex-col">
-                  <div className="flex-1 space-y-8 pt-4">
+                {/* RIGHT */}
+                <div className="w-7/12 p-10 bg-zinc-950 overflow-y-auto">
+                  <div className="space-y-8">
                     {current.items.map((item, idx) => (
                       <motion.div
-                        key={idx}
+                        key={item.id}
                         initial={{ opacity: 0, y: 25 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.08 }}
-                        className="flex justify-between items-start border-b border-white/10 pb-7 last:border-none group"
+                        transition={{ delay: idx * 0.05 }}
+                        className="border-b border-white/10 pb-6"
                       >
-                        <div className="pr-8">
-                          <h3 className="text-xl font-medium group-hover:text-amber-400 transition-colors">
-                            {item.name}
-                          </h3>
-                          <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
-                            {item.desc}
-                          </p>
+                        <div className="flex justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-xl font-semibold">
+                                {item.name}
+                              </h3>
+
+                              {item.is_featured && (
+                                <Star
+                                  size={16}
+                                  className="text-amber-400 fill-amber-400"
+                                />
+                              )}
+                            </div>
+
+                            <p className="text-zinc-400 text-sm mt-2">
+                              {item.description}
+                            </p>
+                          </div>
+
+                          <span className="text-amber-400 text-2xl font-bold">
+                            R {item.price}
+                          </span>
                         </div>
-                        <span className="font-mono text-amber-400 text-2xl font-medium whitespace-nowrap pt-1">
-                          {item.price}
-                        </span>
                       </motion.div>
                     ))}
                   </div>
                 </div>
               </div>
-
-              {/* Subtle Page Curl */}
-              <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/10 to-transparent pointer-events-none" />
             </motion.div>
           </AnimatePresence>
         </motion.div>
 
-        {/* Navigation Controls */}
+        {/* CONTROLS */}
         <div className="flex justify-center items-center gap-8 mt-12">
           <button
             onClick={prevPage}
-            className="flex items-center gap-2 px-6 py-3.5 rounded-full border border-amber-400/30 hover:border-amber-400 hover:bg-white/5 transition-all"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-amber-400/30"
           >
-            <ChevronLeft size={22} /> Previous
+            <ChevronLeft size={22} />
+            Previous
           </button>
 
           <div className="flex gap-3">
-            {menuSections.map((_, idx) => (
+            {sections.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
-                className={`w-3.5 h-3.5 rounded-full transition-all ${
-                  idx === currentPage 
-                    ? "bg-amber-400 scale-125 shadow-[0_0_12px] shadow-amber-400/60" 
-                    : "bg-zinc-700 hover:bg-zinc-500"
+                className={`w-3.5 h-3.5 rounded-full ${
+                  idx === currentPage
+                    ? "bg-amber-400 scale-125"
+                    : "bg-zinc-700"
                 }`}
               />
             ))}
@@ -189,15 +283,16 @@ export default function Menu() {
 
           <button
             onClick={nextPage}
-            className="flex items-center gap-2 px-6 py-3.5 rounded-full border border-amber-400/30 hover:border-amber-400 hover:bg-white/5 transition-all"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-amber-400/30"
           >
-            Next <ChevronRight size={22} />
+            Next
+            <ChevronRight size={22} />
           </button>
         </div>
       </div>
 
-      <p className="text-center text-zinc-500 text-sm mt-6">
-        Drag left or right to flip pages • All prices in ZAR
+      <p className="text-center text-zinc-500 text-sm pb-10">
+        Dynamic digital menu • All prices in ZAR
       </p>
     </div>
   );

@@ -1,4 +1,4 @@
-// frontend/src/pages/home.tsx
+// frontend/src/pages/public/Home.tsx
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import heroImg from "@/assets/hero-club.jpg";

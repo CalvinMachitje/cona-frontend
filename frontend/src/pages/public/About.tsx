@@ -1,4 +1,4 @@
-// frontend/src/pages/about.tsx
+// frontend/src/pages/public/About.tsx
 import { motion } from "framer-motion";
 import NeonBackground from "@/components/NeonBackground";
 
