@@ -120,10 +120,10 @@ export function Footer() {
               083 200 2516
             </li>
 
-            <li className="flex items-center gap-2">
+            {/*<li className="flex items-center gap-2">
               <Mail size={14} className="text-primary" />
               info@conalounge.com
-            </li>
+            </li>*/}
           </ul>
         </div>
       </div>
