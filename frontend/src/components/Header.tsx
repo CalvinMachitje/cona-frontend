@@ -19,32 +19,32 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-blue-500/20 bg-black/70 backdrop-blur-xl">
-      <div className="container mx-auto flex items-center justify-between px-6 py-5">
+      <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <img
             src={logo}
             alt="Cona Logo"
-            className="h-10 w-10 object-contain"
+            className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
           />
 
           <div className="flex items-center gap-1">
-            <span className="font-display text-3xl tracking-[0.25em] text-white">
+            <span className="font-display text-2xl sm:text-3xl tracking-[0.2em] sm:tracking-[0.25em] text-white">
               CO
             </span>
-            <span className="font-display text-3xl tracking-[0.25em] text-blue-400">
+            <span className="font-display text-2xl sm:text-3xl tracking-[0.2em] sm:tracking-[0.25em] text-blue-400">
               NA
             </span>
           </div>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm uppercase tracking-widest">
           {links.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={`hover:text-blue-400 transition-colors ${
+              className={`hover:text-blue-400 transition-colors whitespace-nowrap ${
                 location.pathname === link.to
                   ? "text-blue-400"
                   : "text-gray-400"
@@ -58,7 +58,7 @@ export function Header() {
         {/* Reserve Button */}
         <Link
           to="/booking"
-          className="hidden md:block bg-blue-600 hover:bg-blue-500 px-6 py-2.5 text-xs font-semibold tracking-widest rounded transition-all shadow-[0_0_15px_rgb(59,130,246)] hover:shadow-[0_0_25px_rgb(59,130,246)]"
+          className="hidden md:block bg-blue-600 hover:bg-blue-500 px-5 lg:px-6 py-2.5 text-xs font-semibold tracking-widest rounded transition-all shadow-[0_0_15px_rgb(59,130,246)] hover:shadow-[0_0_25px_rgb(59,130,246)] whitespace-nowrap"
         >
           RESERVE
         </Link>
@@ -66,7 +66,8 @@ export function Header() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden text-white"
+          className="md:hidden text-white flex-shrink-0"
+          aria-label="Toggle Menu"
         >
           {open ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -75,7 +76,7 @@ export function Header() {
       {/* Mobile Menu */}
       {open && (
         <div className="md:hidden bg-black/95 border-t border-blue-500/20">
-          <div className="px-6 py-6 flex flex-col gap-6 text-sm uppercase tracking-widest">
+          <div className="px-4 sm:px-6 py-6 flex flex-col gap-6 text-sm uppercase tracking-widest">
             {links.map((link) => (
               <Link
                 key={link.to}

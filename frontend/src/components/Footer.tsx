@@ -12,12 +12,13 @@ import {
 export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-card/30 mt-32">
-      <div className="container mx-auto px-6 py-16 grid gap-12 md:grid-cols-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
         {/* Brand */}
         <div>
           <h3 className="font-display text-3xl tracking-[0.2em] mb-4">
             CO<span className="text-primary">NA</span>
           </h3>
+
           <p className="text-sm text-muted-foreground leading-relaxed">
             Where the night comes alive. A premium lounge experience crafted
             for unforgettable moments, exclusive vibes, and elevated nightlife.
@@ -45,32 +46,38 @@ export function Footer() {
           <h4 className="text-xs uppercase tracking-[0.3em] text-primary mb-4">
             Navigate
           </h4>
+
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
               <Link to="/" className="hover:text-foreground">
                 Home
               </Link>
             </li>
+
             <li>
               <Link to="/menu" className="hover:text-foreground">
                 Menu
               </Link>
             </li>
+
             <li>
               <Link to="/booking" className="hover:text-foreground">
                 Booking
               </Link>
             </li>
+
             <li>
               <Link to="/gallery" className="hover:text-foreground">
                 Gallery
               </Link>
             </li>
+
             <li>
               <Link to="/about" className="hover:text-foreground">
                 About
               </Link>
             </li>
+
             <li>
               <Link to="/contact" className="hover:text-foreground">
                 Contact
@@ -84,11 +91,13 @@ export function Footer() {
           <h4 className="text-xs uppercase tracking-[0.3em] text-primary mb-4">
             Hours
           </h4>
+
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
-              <Clock size={14} className="text-primary" />
-              Mon – Sun: 10AM – 2AM
+              <Clock size={14} className="text-primary flex-shrink-0" />
+              <span>Mon – Sun: 10AM – 2AM</span>
             </li>
+
             <li className="text-xs text-muted-foreground/70 pl-6">
               Open daily for bookings, dining & nightlife
             </li>
@@ -103,21 +112,24 @@ export function Footer() {
 
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <MapPin size={14} className="text-primary mt-1" />
+              <MapPin
+                size={14}
+                className="text-primary mt-1 flex-shrink-0"
+              />
 
               <a
                 href="https://www.google.com/maps?q=-26.328283,26.315334"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
+                className="hover:text-primary transition-colors break-words"
               >
                 Coligny, 2725
               </a>
             </li>
 
             <li className="flex items-center gap-2">
-              <Phone size={14} className="text-primary" />
-              083 200 2516
+              <Phone size={14} className="text-primary flex-shrink-0" />
+              <span>083 200 2516</span>
             </li>
 
             {/*<li className="flex items-center gap-2">
@@ -130,8 +142,10 @@ export function Footer() {
 
       {/* Bottom */}
       <div className="border-t border-border/40">
-        <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} CONA Lounge. All rights reserved.</p>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground text-center sm:text-left">
+          <p>
+            © {new Date().getFullYear()} CONA Lounge. All rights reserved.
+          </p>
 
           <Link
             to="/contact"
