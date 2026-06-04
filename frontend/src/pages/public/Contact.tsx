@@ -236,12 +236,6 @@ export default function ContactPage() {
             />
 
             <InfoCard
-              icon={Mail}
-              title="Email"
-              lines={["hello@conalounge.co.za"]}
-            />
-
-            <InfoCard
               icon={Clock}
               title="Opening Hours"
               lines={["Monday - Sunday: 10:00 AM – 2:00 AM"]}
