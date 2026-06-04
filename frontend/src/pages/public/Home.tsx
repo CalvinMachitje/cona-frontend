@@ -8,17 +8,17 @@ export default function Home() {
   return (
     <div className="relative overflow-hidden">
       {/* ================= HERO ================= */}
-      <section className="relative min-h-screen flex items-center justify-center text-center px-6">
+      <section className="relative min-h-screen w-full flex items-center justify-center text-center px-4 sm:px-6">
         {/* Background Image */}
         <img
           src={heroImg}
-          className="absolute inset-0 w-full h-full object-cover scale-110"
+          className="absolute inset-0 w-full h-full object-cover scale-110 max-w-none"
           alt="Cona Lounge"
         />
       </section>
 
       {/* ================= EXPERIENCE ================= */}
-      <section className="relative py-24 px-6 max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+      <section className="relative py-24 px-4 sm:px-6 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="absolute inset-0 -z-10">
           <div className="absolute w-100 h-100 bg-primary/20 blur-[120px] rounded-full left-1/2 -translate-x-1/2 top-0" />
         </div>
@@ -49,9 +49,9 @@ export default function Home() {
       </section>
 
       {/* ================= CTA ================= */}
-      <section className="py-24 text-center px-6">
-        <div className="max-w-3xl mx-auto glass p-12 rounded-2xl border border-border shadow-glow">
-          <h2 className="text-4xl font-display text-gradient mb-6">
+      <section className="py-24 text-center px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto glass p-6 sm:p-12 rounded-2xl border border-border shadow-glow">
+          <h2 className="text-3xl sm:text-4xl font-display text-gradient mb-6">
             Reserve Your Night
           </h2>
 
@@ -61,7 +61,7 @@ export default function Home() {
 
           <Link
             to="/booking"
-            className="bg-gradient-primary px-10 py-4 rounded-lg shadow-glow hover:shadow-glow-lg transition"
+            className="inline-block bg-gradient-primary px-8 sm:px-10 py-4 rounded-lg shadow-glow hover:shadow-glow-lg transition"
           >
             BOOK NOW
           </Link>
