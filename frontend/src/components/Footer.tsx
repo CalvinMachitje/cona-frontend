@@ -33,57 +33,12 @@ export function Footer() {
             </a>
 
             <a
-              href="#"
+              href="https://www.facebook.com/people/Cona-Lounge/61588957114602/"
               className="w-9 h-9 rounded-full border border-border flex items-center justify-center hover:bg-primary hover:border-primary transition-colors"
             >
               <Facebook size={16} />
             </a>
           </div>
-        </div>
-
-        {/* Navigation */}
-        <div>
-          <h4 className="text-xs uppercase tracking-[0.3em] text-primary mb-4">
-            Navigate
-          </h4>
-
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>
-              <Link to="/" className="hover:text-foreground">
-                Home
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/menu" className="hover:text-foreground">
-                Menu
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/booking" className="hover:text-foreground">
-                Booking
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/gallery" className="hover:text-foreground">
-                Gallery
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/about" className="hover:text-foreground">
-                About
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/contact" className="hover:text-foreground">
-                Contact
-              </Link>
-            </li>
-          </ul>
         </div>
 
         {/* Operating Hours */}

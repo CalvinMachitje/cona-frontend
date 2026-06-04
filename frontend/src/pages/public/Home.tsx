@@ -67,11 +67,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
-      {/* ================= FOOTER ================= */}
-      <footer className="py-10 text-center border-t border-border text-sm text-muted-foreground">
-        © {new Date().getFullYear()} CONA Lounge
-      </footer>
     </div>
   );
 }

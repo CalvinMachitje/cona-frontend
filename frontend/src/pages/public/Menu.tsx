@@ -14,27 +14,35 @@ import wines from "@/assets/pictures/wines.webp";
 import beers from "@/assets/pictures/beers.jpg";
 import starters from "@/assets/pictures/starters.webp";
 import lightMeals from "@/assets/pictures/lightmeal.jpg";
-import pasta from "@/assets/pictures//pastajpg.jpg";
 import mains from "@/assets/pictures/mealsVid.mp4";
-import pizza from "@/assets/pictures/pizza.webp";
-import platters from "@/assets/pictures/platters.jpg";
+import platters from "@/assets/dinepe/Cona images/plater4.jpg";
 import desserts from "@/assets/pictures/desserts.jpg";
 import softDrinks from "@/assets/pictures/softdrinks.jpg";
 import hotBeverages from "@/assets/pictures/hotbeverages.jpg";
 
+import special from "@/assets/dinepe/Cona images/chakalaka.jpg";
+import special2 from "@/assets/dinepe/Cona images/chips.jpg";
+import special3 from "@/assets/dinepe/Cona images/daily special.jpg";
+import special4 from "@/assets/dinepe/Cona images/flame grill combo.jpg";
+import special5 from "@/assets/dinepe/Cona images/food7.jpg";
+import special6 from "@/assets/dinepe/Cona images/wors roll.jpg";
+
 type MenuItem = {
   id: string;
-  name: string;
-  description: string;
-  price: number;
+  name?: string;
+  description?: string;
+  price?: number;
   is_featured?: boolean;
+  image?: string;
 };
 
 type MenuSection = {
   title: string;
-  image: string;
+  image?: string;
   video?: string;
   items: MenuItem[];
+  isSpecials?: boolean;
+  specialImages?: string[];
 };
 
 const categoryEmoji: Record<string, string> = {
@@ -53,6 +61,7 @@ const categoryEmoji: Record<string, string> = {
   "Desserts": "",
   "Soft Drinks & Ciders": "",
   "Hot Beverages": "",
+  "Special Combos": "🔥",
 };
 
 const menuSections: MenuSection[] = [
@@ -160,15 +169,6 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
-    title: "Pasta",
-    image: pasta,
-    items: [
-      { id: "pa1", name: "Chicken Alfredo", description: "", price: 150 },
-      { id: "pa2", name: "Spaghetti Bolognaise", description: "", price: 120 },
-      { id: "pa3", name: "Vegetarian Pasta", description: "", price: 120 },
-    ],
-  },
-  {
     title: "Mains",
     image: "",
     video: mains,
@@ -183,21 +183,12 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
-    title: "Pizza",
-    image: pizza,
-    items: [
-      { id: "pz1", name: "Regina", description: "Ham, mushroom and mozzarella cheese", price: 150 },
-      { id: "pz2", name: "Four Seasons (V)", description: "Stir fry veg, pepper dews, origanum and mozzarella", price: 120 },
-      { id: "pz3", name: "Chefs Meat Galore", description: "Mince, Russians, Pork Ribs, Chicken strips", price: 220 },
-    ],
-  },
-  {
     title: "Platters",
     image: platters,
     items: [
       { id: "pl1", name: "Seafood Platter (4)", description: "4 Hake, 12 Prawns, Calamari, Squid heads", price: 700 },
-      { id: "pl2", name: "Meat Platter (4)", description: "Ribs, Buffalo wings, Beef sausage, Chicken strips", price: 800 },
-      { id: "pl3", name: "Meat Platter (8)", description: "Ribs, Buffalo wings, Beef sausage, Chicken strips", price: 1200 },
+      { id: "pl2", name: "Meat Platter (4)", description: "Steak, Boerewors, Chicken", price: 400 },
+      { id: "pl3", name: "Meat Platter (8)", description: "Ribs, Buffalo wings, Beef sausage, Chicken strips", price: 800 },
     ],
   },
   {
@@ -232,6 +223,13 @@ const menuSections: MenuSection[] = [
       { id: "hb5", name: "Rooibos", description: "", price: 35 },
     ],
   },
+  // ==================== SPECIAL COMBOS ====================
+  {
+    title: "Special Combos",
+    isSpecials: true,
+    specialImages: [special, special2, special3, special4, special5, special6],
+    items: [], // Empty because we only show images
+  },
 ];
 
 export default function MenuPage() {
@@ -239,6 +237,7 @@ export default function MenuPage() {
   const current = menuSections[activeCategory];
 
   const isVideo = !!current.video;
+  const isSpecials = current.isSpecials === true;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
@@ -290,10 +289,22 @@ export default function MenuPage() {
           transition={{ duration: 0.5 }}
           className="rounded-3xl overflow-hidden border border-amber-400/20 bg-zinc-950"
         >
-          <div className="flex flex-col lg:flex-row h-full min-h-[680px]">
-            {/* LEFT - VISUAL (Full Original Size - No Cropping) */}
-            <div className="lg:w-5/12 bg-black/80 p-10 flex flex-col items-center justify-center">
-              {isVideo ? (
+          <div className={`flex ${isSpecials ? 'flex-col' : 'flex-col lg:flex-row'} h-full min-h-[680px]`}>
+            {/* LEFT - VISUAL / IMAGES */}
+            <div className={`${isSpecials ? 'w-full p-8' : 'lg:w-5/12 bg-black/80 p-10'} flex flex-col items-center justify-center`}>
+              {isSpecials ? (
+                <div className="grid grid-cols-2 gap-6 w-full max-w-4xl">
+                  {current.specialImages?.map((img, index) => (
+                    <div key={index} className="overflow-hidden rounded-3xl shadow-2xl border border-amber-400/30">
+                      <img
+                        src={img}
+                        alt={`Special Combo ${index + 1}`}
+                        className="w-full h-full object-contain bg-black"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : isVideo ? (
                 <video
                   src={current.video}
                   autoPlay
@@ -309,54 +320,57 @@ export default function MenuPage() {
                   className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl mb-8"
                 />
               )}
-              <span className="text-7xl mb-6">{categoryEmoji[current.title]}</span>
-              <h2 className="text-5xl text-center font-bold text-amber-300 tracking-tight">
-                {current.title.toUpperCase()}
-              </h2>
+
+              {!isSpecials && (
+                <>
+                  <span className="text-7xl mb-6">{categoryEmoji[current.title]}</span>
+                  <h2 className="text-5xl text-center font-bold text-amber-300 tracking-tight">
+                    {current.title.toUpperCase()}
+                  </h2>
+                </>
+              )}
             </div>
 
-            {/* RIGHT - ITEMS */}
-            <div className="lg:w-7/12 p-10 bg-zinc-950 overflow-y-auto">
-              <div className="space-y-8">
-                {current.items.map((item, idx) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className="border-b border-white/10 pb-6 last:border-none"
-                  >
-                    <div className="flex justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-2">
-                          <h3 className="text-xl font-semibold leading-tight">
-                            {item.name}
-                          </h3>
-                          {item.is_featured && (
-                            <Star size={18} className="text-amber-400 fill-amber-400 mt-0.5" />
+            {/* RIGHT - ITEMS (Hidden for Special Combos) */}
+            {!isSpecials && (
+              <div className="lg:w-7/12 p-10 bg-zinc-950 overflow-y-auto">
+                <div className="space-y-8">
+                  {current.items.map((item, idx) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className="border-b border-white/10 pb-6 last:border-none"
+                    >
+                      <div className="flex justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-2">
+                            <h3 className="text-xl font-semibold leading-tight">
+                              {item.name}
+                            </h3>
+                            {item.is_featured && (
+                              <Star size={18} className="text-amber-400 fill-amber-400 mt-0.5" />
+                            )}
+                          </div>
+                          {item.description && (
+                            <p className="text-zinc-400 text-sm mt-1.5 leading-snug">
+                              {item.description}
+                            </p>
                           )}
                         </div>
-                        {item.description && (
-                          <p className="text-zinc-400 text-sm mt-1.5 leading-snug">
-                            {item.description}
-                          </p>
-                        )}
+                        <div className="text-right">
+                          <span className="text-amber-400 text-2xl font-bold">R{item.price}</span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-amber-400 text-2xl font-bold">R{item.price}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </motion.div>
       </div>
-
-      <p className="text-center text-zinc-500 text-sm pb-12">
-        CONA Lounge • All prices in ZAR • Prices subject to change
-      </p>
     </div>
   );
 }

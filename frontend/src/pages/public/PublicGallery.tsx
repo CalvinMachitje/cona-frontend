@@ -13,15 +13,7 @@ import venue7 from "@/assets/pictures/venue2.jpg";
 import venue8 from "@/assets/pictures/venue3.jpg";
 import venue9 from "@/assets/Cona images/staff.webp";
 import venue10 from "@/assets/pictures/bathroom.jpg";
-
-/*// Drinks
-import drink1 from "@/assets/pictures/biya.jpg";
-import drink2 from "@/assets/pictures/verve.jpg";
-
-// Meals
-import meal1 from "@/assets/pictures/food.jpg";
-import meal2 from "@/assets/pictures/food1.jpg";
-import meal3 from "@/assets/pictures/food2.jpg";*/
+import venue11 from "@/assets/dinepe/Cona images/outside.jpg";
 
 // Lifestyle
 import lifestyle1 from "@/assets/pictures/lifestyle.jpg";
@@ -30,6 +22,10 @@ import lifestyle3 from "@/assets/pictures/biya.jpg";
 import lifestyle4 from "@/assets/pictures/biya1.jpg";
 import lifestyle5 from "@/assets/pictures/logoimage.jpg";
 import lifestyle6 from "@/assets/pictures/customers.jpg";
+import lifestyle7 from "@/assets/dinepe/Cona images/lifestyle4.jpg";
+import lifestyle8 from "@/assets/dinepe/Cona images/inside.jpg";
+import lifestyle9 from "@/assets/dinepe/Cona images/view.jpg";
+import lifestyle10 from "@/assets/dinepe/Cona images/hubbly.jpg";
 
 type Category = "venue" | "lifestyle";
 
@@ -45,15 +41,7 @@ const galleryImages = [
   { src: venue8, category: "venue" },
   { src: venue9, category: "venue" },
   { src: venue10, category: "venue" },
-
-  /*// Drinks
-  { src: drink1, category: "drinks" },
-  { src: drink2, category: "drinks" },
-
-  // Meals
-  { src: meal1, category: "meals" },
-  { src: meal2, category: "meals" },
-  { src: meal3, category: "meals" },*/
+  { src: venue11, category: "venue" },
 
   // Lifestyle
   { src: lifestyle1, category: "lifestyle" },
@@ -62,6 +50,10 @@ const galleryImages = [
   { src: lifestyle4, category: "lifestyle" },
   { src: lifestyle5, category: "lifestyle" },
   { src: lifestyle6, category: "lifestyle" },
+  { src: lifestyle7, category: "lifestyle" },
+  { src: lifestyle8, category: "lifestyle" },
+  { src: lifestyle9, category: "lifestyle" },
+  { src: lifestyle10, category: "lifestyle" },
 ];
 
 export default function Gallery() {
