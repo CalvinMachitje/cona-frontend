@@ -12,7 +12,7 @@ export default function Home() {
         {/* Background Image */}
         <img
           src={heroImg}
-          className="absolute inset-0 w-full h-full object-cover scale-110 max-w-none"
+          className="absolute inset-0 w-full h-full object-cover object-center"
           alt="Cona Lounge"
         />
       </section>
