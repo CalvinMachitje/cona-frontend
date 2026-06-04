@@ -7,45 +7,61 @@ import venue1 from "@/assets/Cona images/inside_view.webp";
 import venue2 from "@/assets/Cona images/inside_view2.webp";
 import venue3 from "@/assets/Cona images/inside_view3.webp";
 import venue4 from "@/assets/Cona images/inside_view4.webp";
-import venue5 from "@/assets/Cona images/inside_view5.webp";
-import venue6 from "@/assets/Cona images/inside_view6.webp";
-import venue7 from "@/assets/Cona images/staff.webp";
+import venue5 from "@/assets/pictures/venue.jpg";
+import venue6 from "@/assets/pictures/venue1.jpg";
+import venue7 from "@/assets/pictures/venue2.jpg";
+import venue8 from "@/assets/pictures/venue3.jpg";
+import venue9 from "@/assets/Cona images/staff.webp";
+import venue10 from "@/assets/pictures/bathroom.jpg";
 
-// Drinks
-import drink1 from "@/assets/cocktail.jpg";
-import drink2 from "@/assets/bartender.jpg";
-/*import drink3 from "@/assets/drink3.jpg";
-import drink4 from "@/assets/drink4.jpg";*/
+/*// Drinks
+import drink1 from "@/assets/pictures/biya.jpg";
+import drink2 from "@/assets/pictures/verve.jpg";
 
 // Meals
-import meal1 from "@/assets/dining.jpg";
-/*import meal2 from "@/assets/meal2.jpg";
-import meal3 from "@/assets/meal3.jpg";
-import meal4 from "@/assets/meal4.jpg";*/
+import meal1 from "@/assets/pictures/food.jpg";
+import meal2 from "@/assets/pictures/food1.jpg";
+import meal3 from "@/assets/pictures/food2.jpg";*/
 
-type Category = "venue" | "drinks" | "meals";
+// Lifestyle
+import lifestyle1 from "@/assets/pictures/lifestyle.jpg";
+import lifestyle2 from "@/assets/pictures/lifestyle2.jpg";
+import lifestyle3 from "@/assets/pictures/biya.jpg";
+import lifestyle4 from "@/assets/pictures/biya1.jpg";
+import lifestyle5 from "@/assets/pictures/logoimage.jpg";
+import lifestyle6 from "@/assets/pictures/customers.jpg";
+
+type Category = "venue" | "lifestyle";
 
 const galleryImages = [
   // Venue
-  { src: venue1, alt: "Main Lounge", category: "venue" },
-  { src: venue2, alt: "Bar Area", category: "venue" },
-  { src: venue3, alt: "Outdoor Seating", category: "venue" },
-  { src: venue4, alt: "VIP Section", category: "venue" },
-  { src: venue5, alt: "Dance Floor", category: "venue" },
-  { src: venue6, alt: "Live Music Stage", category: "venue" },
-  { src: venue7, alt: "Friendly Staff", category: "venue" },
+  { src: venue1, category: "venue" },
+  { src: venue2, category: "venue" },
+  { src: venue3, category: "venue" },
+  { src: venue4, category: "venue" },
+  { src: venue5, category: "venue" },
+  { src: venue6, category: "venue" },
+  { src: venue7, category: "venue" },
+  { src: venue8, category: "venue" },
+  { src: venue9, category: "venue" },
+  { src: venue10, category: "venue" },
 
-  // Drinks
-  { src: drink1, alt: "Premium Cocktails", category: "drinks" },
-  { src: drink2, alt: "Liquor Collection", category: "drinks" },
-  /*{ src: drink3, alt: "Whiskey Selection", category: "drinks" },
-  { src: drink4, alt: "Signature Drinks", category: "drinks" },*/
+  /*// Drinks
+  { src: drink1, category: "drinks" },
+  { src: drink2, category: "drinks" },
 
   // Meals
-  { src: meal1, alt: "Grilled Specials", category: "meals" },
-  /*{ src: meal2, alt: "Burger Meals", category: "meals" },
-  { src: meal3, alt: "Steak Platters", category: "meals" },
-  { src: meal4, alt: "Chef Specials", category: "meals" },*/
+  { src: meal1, category: "meals" },
+  { src: meal2, category: "meals" },
+  { src: meal3, category: "meals" },*/
+
+  // Lifestyle
+  { src: lifestyle1, category: "lifestyle" },
+  { src: lifestyle2, category: "lifestyle" },
+  { src: lifestyle3, category: "lifestyle" },
+  { src: lifestyle4, category: "lifestyle" },
+  { src: lifestyle5, category: "lifestyle" },
+  { src: lifestyle6, category: "lifestyle" },
 ];
 
 export default function Gallery() {
@@ -88,6 +104,7 @@ export default function Gallery() {
             Venue Images
           </FilterButton>
 
+          {/*
           <FilterButton
             active={activeCategory === "drinks"}
             onClick={() => setActiveCategory("drinks")}
@@ -100,32 +117,50 @@ export default function Gallery() {
             onClick={() => setActiveCategory("meals")}
           >
             Meals Served
+          </FilterButton>*/}
+
+          <FilterButton
+            active={activeCategory === "lifestyle"}
+            onClick={() => setActiveCategory("lifestyle")}
+          >
+            Lifestyle
           </FilterButton>
         </div>
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+        {/* Gallery */}
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-5 space-y-5">
           {filteredImages.map((img, index) => (
             <motion.div
               key={`${activeCategory}-${index}`}
-              initial={{ opacity: 0, scale: 0.96 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.45,
+                delay: index * 0.04,
+              }}
               viewport={{ once: true }}
-              className="relative overflow-hidden rounded-3xl border border-zinc-800 group h-[300px]"
+              className="break-inside-avoid mb-5"
             >
-              <img
-                src={img.src}
-                alt={img.alt}
-                className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
-              />
+              <div className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-sm shadow-lg hover:border-primary/40 transition-all duration-300">
+                <div className="p-3">
+                  <img
+                    src={img.src}
+                    alt={img.category}
+                    loading="lazy"
+                    className="w-full h-auto object-contain rounded-2xl transition-transform duration-700 group-hover:scale-[1.03]"
+                  />
+                </div>
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300" />
 
-              <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition">
-                <p className="text-sm uppercase tracking-[0.2em] text-primary font-medium">
-                  {img.alt}
-                </p>
+                <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition duration-300">
+                  <p className="text-xs uppercase tracking-[0.25em] text-primary font-semibold">
+                    {img.category === "venue" && "Venue"}
+                    {img.category === "drinks" && "Drinks"}
+                    {img.category === "meals" && "Meals"}
+                    {img.category === "lifestyle" && "Lifestyle"}
+                  </p>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -147,10 +182,10 @@ function FilterButton({
   return (
     <button
       onClick={onClick}
-      className={`px-8 py-3 rounded-2xl font-medium transition ${
+      className={`px-8 py-3 rounded-2xl font-medium transition-all duration-300 ${
         active
-          ? "bg-primary text-white"
-          : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
+          ? "bg-primary text-white shadow-lg shadow-primary/25"
+          : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"
       }`}
     >
       {children}

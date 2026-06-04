@@ -1,7 +1,7 @@
 // frontend/src/pages/public/Home.tsx
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import heroImg from "@/assets/hero-club.jpg";
+import heroImg from "@/assets/pictures/reception.jpg";
 import logo from "@/assets/Cona images/logo.webp";
 
 export default function Home() {
@@ -15,60 +15,6 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover scale-110"
           alt="Cona Lounge"
         />
-
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70" />
-
-        {/* Glow Orbs */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-150 h-150 bg-primary/30 blur-[120px] rounded-full -top-25 -left-25" />
-          <div className="absolute w-125 h-125 bg-primary/20 blur-[120px] rounded-full -bottom-25 -right-25" />
-        </div>
-
-        {/* Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 flex flex-col items-center"
-        >
-          <p className="text-primary text-xs tracking-[0.5em] uppercase mb-4">
-            PREMIUM LOUNGE EXPERIENCE
-          </p>
-
-          {/* Logo */}
-          <img
-            src={logo}
-            alt="Cona Logo"
-            className="w-24 h-24 md:w-32 md:h-32 object-contain mb-4 drop-shadow-[0_0_25px_rgba(59,130,246,0.6)]"
-          />
-
-          {/* Brand Name */}
-          <h1 className="font-display text-[7rem] md:text-[11rem] leading-none text-white drop-shadow-[0_0_40px_rgba(99,102,241,0.6)]">
-            CO<span className="text-primary">NA</span>
-          </h1>
-
-          <p className="max-w-xl mt-6 text-lg text-muted-foreground mx-auto">
-            Where the night comes alive.
-            <br />
-            Experience luxury, music, unforgettable moments.
-          </p>
-
-          <div className="flex gap-4 mt-10 justify-center flex-wrap">
-            <Link
-              to="/booking"
-              className="bg-gradient-primary px-8 py-4 rounded-lg shadow-glow hover:shadow-glow-lg transition"
-            >
-              BOOK NOW
-            </Link>
-
-            <Link
-              to="/menu"
-              className="glass border border-border px-8 py-4 rounded-lg hover:bg-white/10 transition"
-            >
-              VIEW MENU
-            </Link>
-          </div>
-        </motion.div>
       </section>
 
       {/* ================= EXPERIENCE ================= */}

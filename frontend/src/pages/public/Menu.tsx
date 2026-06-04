@@ -1,156 +1,244 @@
 // frontend/src/pages/public/Menu.tsx
-import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { PanInfo } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
-  ChevronLeft,
-  ChevronRight,
   BookOpen,
   Star,
 } from "lucide-react";
 
-import { supabase } from "@/lib/supabase";
+import champagne from "@/assets/pictures/verve.jpg";
+import cocktail from "@/assets/pictures/cocktail.webp";
+import shots from "@/assets/pictures/shots.jpg";
+import spirits1 from "@/assets/pictures/Spirits1.webp";
+import wines from "@/assets/pictures/wines.webp";
+import beers from "@/assets/pictures/beers.jpg";
+import starters from "@/assets/pictures/starters.webp";
+import lightMeals from "@/assets/pictures/lightmeal.jpg";
+import pasta from "@/assets/pictures//pastajpg.jpg";
+import mains from "@/assets/pictures/mealsVid.mp4";
+import pizza from "@/assets/pictures/pizza.webp";
+import platters from "@/assets/pictures/platters.jpg";
+import desserts from "@/assets/pictures/desserts.jpg";
+import softDrinks from "@/assets/pictures/softdrinks.jpg";
+import hotBeverages from "@/assets/pictures/hotbeverages.jpg";
 
 type MenuItem = {
   id: string;
   name: string;
   description: string;
   price: number;
-  image_url: string;
-  category: string;
-  is_available: boolean;
-  is_featured: boolean;
+  is_featured?: boolean;
 };
 
 type MenuSection = {
   title: string;
   image: string;
-  emoji: string;
+  video?: string;
   items: MenuItem[];
 };
 
 const categoryEmoji: Record<string, string> = {
-  Cocktails: "🍸",
-  Food: "🍽️",
-  "Bottle Service": "🍾",
-  Wine: "🍷",
-  Beer: "🍺",
-  Shots: "🥃",
-  Desserts: "🍰",
-  General: "✨",
+  "Signature Cocktails": "",
+  "Shots & Shooters": "",
+  "Spirits": "",
+  "Wine": "",
+  "Champagne & MCC": "",
+  "Beer": "",
+  "Starters": "",
+  "Light Meals": "",
+  "Pasta": "",
+  "Mains": "",
+  "Pizza": "",
+  "Platters": "",
+  "Desserts": "",
+  "Soft Drinks & Ciders": "",
+  "Hot Beverages": "",
 };
 
+const menuSections: MenuSection[] = [
+  {
+    title: "Signature Cocktails",
+    image: cocktail,
+    items: [
+      { id: "c1", name: "Strawberry Daiquiri", description: "", price: 85 },
+      { id: "c2", name: "Blue Lagoon", description: "", price: 90 },
+      { id: "c3", name: "Mint Mojito", description: "", price: 75 },
+      { id: "c4", name: "Tequila Sunrise / Sunset", description: "", price: 85 },
+      { id: "c5", name: "Long Island Iced Tea", description: "", price: 110 },
+      { id: "c6", name: "Margarita (Frozen / Shaken)", description: "", price: 90 },
+      { id: "c7", name: "Screwdriver (Frozen OPT)", description: "", price: 85 },
+      { id: "c8", name: "Cosmopolitan", description: "", price: 75 },
+      { id: "c9", name: "Sex on the Beach", description: "", price: 80 },
+    ],
+  },
+  {
+    title: "Shots & Shooters",
+    image: shots,
+    items: [
+      { id: "sh1", name: "Passion Fruit", description: "", price: 12 },
+      { id: "sh2", name: "Lime", description: "", price: 12 },
+      { id: "sh3", name: "Kola Tonic", description: "", price: 12 },
+      { id: "sh4", name: "Blowjob", description: "", price: 40 },
+      { id: "sh5", name: "Springbok", description: "", price: 35 },
+      { id: "sh6", name: "Sowetan Toilet", description: "", price: 35 },
+      { id: "sh7", name: "Liquid Cocain", description: "", price: 40 },
+    ],
+  },
+  {
+    title: "Spirits",
+    image: spirits1,
+    items: [
+      { id: "sp1", name: "Martel Blue Swift", description: "Shot / Bottle", price: 75 },
+      { id: "sp2", name: "Martel VS", description: "Shot / Bottle", price: 60 },
+      { id: "sp3", name: "Hennessy VS", description: "Shot / Bottle", price: 55 },
+      { id: "sp4", name: "Hennessy VSOP", description: "Shot / Bottle", price: 75 },
+      { id: "sp5", name: "Hennessy XO", description: "", price: 6000 },
+      { id: "sp6", name: "Jameson", description: "Shot / Bottle", price: 40 },
+      { id: "sp7", name: "Jack Daniels", description: "Shot / Bottle", price: 35 },
+      { id: "sp8", name: "Glenlivet 12 Yr", description: "Shot / Bottle", price: 70 },
+      { id: "sp9", name: "Hendricks", description: "Shot / Bottle", price: 45 },
+      { id: "sp10", name: "Tanqueray", description: "Shot / Bottle", price: 35 },
+      { id: "sp11", name: "Absolut", description: "Shot / Bottle", price: 45 },
+      { id: "sp12", name: "Smirnoff", description: "Shot / Bottle", price: 30 },
+      { id: "sp13", name: "Don Julio Blanco", description: "Shot / Bottle", price: 70 },
+      { id: "sp14", name: "Jägermeister", description: "", price: 45 },
+      { id: "sp15", name: "Kahlua", description: "", price: 25 },
+    ],
+  },
+  {
+    title: "Wine",
+    image: wines,
+    items: [
+      { id: "w1", name: "Nederburg Baronne", description: "Red", price: 300 },
+      { id: "w2", name: "Rupert & Rothschild", description: "Red", price: 600 },
+      { id: "w3", name: "Chocolate Block", description: "Red", price: 600 },
+      { id: "w4", name: "Durbanville Hills Sauv Blanc", description: "White", price: 300 },
+      { id: "w5", name: "Warwick Chardonnay", description: "White", price: 550 },
+    ],
+  },
+  {
+    title: "Champagne & MCC",
+    image: champagne,
+    items: [
+      { id: "ch1", name: "Armand de Brignac Brut", description: "", price: 12000 },
+      { id: "ch2", name: "Dom Perignon Blanc", description: "", price: 9500 },
+      { id: "ch3", name: "Veuve Clicquot", description: "", price: 1800 },
+      { id: "ch4", name: "Moet & Chandon", description: "", price: 1700 },
+      { id: "ch5", name: "Krone Brut", description: "", price: 400 },
+    ],
+  },
+  {
+    title: "Beer",
+    image: beers,
+    items: [
+      { id: "b1", name: "Castle Lite", description: "", price: 30 },
+      { id: "b2", name: "Castle Lager", description: "", price: 32 },
+      { id: "b3", name: "Corona Extra", description: "", price: 45 },
+      { id: "b4", name: "Heineken", description: "", price: 40 },
+      { id: "b5", name: "Stella Artois", description: "", price: 40 },
+    ],
+  },
+  {
+    title: "Starters",
+    image: starters,
+    items: [
+      { id: "st1", name: "Stuffed Calamari", description: "Calamari tubes grilled with feta & cream spinach", price: 120 },
+      { id: "st2", name: "Lemon Pepper Queen Prawns", description: "4x queen prawns grilled with lemon pepper sauce", price: 150 },
+      { id: "st3", name: "Portuguese Chicken Livers", description: "Spicy chicken livers grilled served with toasted ciabatta", price: 90 },
+      { id: "st4", name: "Beef Trinchado", description: "Beef strips grilled & smothered in creamy garlic broth", price: 110 },
+      { id: "st5", name: "Buffalo Wings", description: "Grilled chicken wings with sweet chilli dip", price: 100 },
+    ],
+  },
+  {
+    title: "Light Meals",
+    image: lightMeals,
+    items: [
+      { id: "lm1", name: "Gourmet Sandwich", description: "Grilled chicken breast, hickory ham, English mustard, mayonnaise, cheddar, mozzarella", price: 120 },
+      { id: "lm2", name: "Caesar Salad", description: "Fresh mixed lettuce, croutons, grated parmesan cheese", price: 110 },
+      { id: "lm3", name: "Fried Chicken Wrap", description: "Chicken breast coated in panko, avocado & mayonnaise", price: 140 },
+      { id: "lm4", name: "Garden Salad", description: "Mixed lettuce, cucumber, cherry tomatoes, red onions, feta, olives", price: 100 },
+    ],
+  },
+  {
+    title: "Pasta",
+    image: pasta,
+    items: [
+      { id: "pa1", name: "Chicken Alfredo", description: "", price: 150 },
+      { id: "pa2", name: "Spaghetti Bolognaise", description: "", price: 120 },
+      { id: "pa3", name: "Vegetarian Pasta", description: "", price: 120 },
+    ],
+  },
+  {
+    title: "Mains",
+    image: "",
+    video: mains,
+    items: [
+      { id: "m1", name: "Fillet Steak", description: "Aged 300g fillet with olive oil and coarse salt rub", price: 285 },
+      { id: "m2", name: "Pork Belly", description: "Succulent slow cooked pork belly with crispy crackling", price: 200 },
+      { id: "m3", name: "Fisherman's Catch", description: "Hake, prawns, squid heads & calamari rings", price: 250 },
+      { id: "m4", name: "Kingklip", description: "Meaty fish portion grilled in lemon butter sauce", price: 300 },
+      { id: "m5", name: "Chicken Espatada", description: "Deboned chicken thighs marinated overnight", price: 180 },
+      { id: "m6", name: "Pig & Chicken", description: "300g loin ribs", price: 275 },
+      { id: "m7", name: "T-Bone", description: "500g dry aged T-bone", price: 260 },
+    ],
+  },
+  {
+    title: "Pizza",
+    image: pizza,
+    items: [
+      { id: "pz1", name: "Regina", description: "Ham, mushroom and mozzarella cheese", price: 150 },
+      { id: "pz2", name: "Four Seasons (V)", description: "Stir fry veg, pepper dews, origanum and mozzarella", price: 120 },
+      { id: "pz3", name: "Chefs Meat Galore", description: "Mince, Russians, Pork Ribs, Chicken strips", price: 220 },
+    ],
+  },
+  {
+    title: "Platters",
+    image: platters,
+    items: [
+      { id: "pl1", name: "Seafood Platter (4)", description: "4 Hake, 12 Prawns, Calamari, Squid heads", price: 700 },
+      { id: "pl2", name: "Meat Platter (4)", description: "Ribs, Buffalo wings, Beef sausage, Chicken strips", price: 800 },
+      { id: "pl3", name: "Meat Platter (8)", description: "Ribs, Buffalo wings, Beef sausage, Chicken strips", price: 1200 },
+    ],
+  },
+  {
+    title: "Desserts",
+    image: desserts,
+    items: [
+      { id: "d1", name: "Cheese Cake", description: "", price: 85 },
+      { id: "d2", name: "Malva Pudding", description: "", price: 75 },
+      { id: "d3", name: "Chocolate Mud Pie", description: "", price: 90 },
+    ],
+  },
+  {
+    title: "Soft Drinks & Ciders",
+    image: softDrinks,
+    items: [
+      { id: "sd1", name: "Coke / Zero / Light", description: "", price: 25 },
+      { id: "sd2", name: "Sprite / Zero", description: "", price: 25 },
+      { id: "sd3", name: "Red Bull", description: "", price: 45 },
+      { id: "sd4", name: "Bernini Classic / Amber / Mimosa", description: "", price: 35 },
+      { id: "sd5", name: "Hunters Dry / Gold", description: "", price: 35 },
+      { id: "sd6", name: "Savanna", description: "", price: 35 },
+    ],
+  },
+  {
+    title: "Hot Beverages",
+    image: hotBeverages,
+    items: [
+      { id: "hb1", name: "Cappuccino", description: "", price: 45 },
+      { id: "hb2", name: "Cafe Latte", description: "", price: 40 },
+      { id: "hb3", name: "Filter Coffee", description: "", price: 35 },
+      { id: "hb4", name: "Hot Chocolate", description: "", price: 45 },
+      { id: "hb5", name: "Rooibos", description: "", price: 35 },
+    ],
+  },
+];
+
 export default function MenuPage() {
-  const [sections, setSections] = useState<MenuSection[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState(0);
+  const current = menuSections[activeCategory];
 
-  const loadMenu = async () => {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase.functions.invoke(
-        "manage-menu",
-        {
-          body: {
-            action: "get",
-          },
-        }
-      );
-
-      if (error) throw error;
-
-      const rawItems: MenuItem[] = data?.data ?? [];
-
-      // IMPORTANT: only available items shown publicly
-      const items = rawItems.filter(
-        (item) => item?.is_available === true
-      );
-
-      const groupedMap: Record<string, MenuSection> = {};
-
-      for (const item of items) {
-        if (!groupedMap[item.category]) {
-          groupedMap[item.category] = {
-            title: item.category,
-            image:
-              item.image_url ||
-              "https://placehold.co/800x800?text=CONA",
-            emoji: categoryEmoji[item.category] || "🍽️",
-            items: [],
-          };
-        }
-
-        groupedMap[item.category].items.push(item);
-      }
-
-      const grouped = Object.values(groupedMap);
-
-      setSections(grouped);
-      setCurrentPage(0); // reset page when reload
-    } catch (err) {
-      console.error("MENU LOAD ERROR:", err);
-      setSections([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadMenu();
-  }, []);
-
-  const nextPage = () => {
-    if (!sections.length) return;
-    setCurrentPage((prev) => (prev + 1) % sections.length);
-  };
-
-  const prevPage = () => {
-    if (!sections.length) return;
-    setCurrentPage(
-      (prev) => (prev - 1 + sections.length) % sections.length
-    );
-  };
-
-  const handleDragEnd = (_: any, info: PanInfo) => {
-    const threshold = 80;
-
-    if (!sections.length) return;
-
-    if (info.offset.x > threshold) {
-      prevPage();
-    } else if (info.offset.x < -threshold) {
-      nextPage();
-    }
-  };
-
-  const current = useMemo(
-    () => sections[currentPage],
-    [sections, currentPage]
-  );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        Loading menu...
-      </div>
-    );
-  }
-
-  if (!sections.length) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center text-center px-6">
-        <div>
-          <p className="text-xl font-semibold">
-            No menu items available
-          </p>
-          <p className="text-zinc-400 mt-2">
-            Please check back later.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const isVideo = !!current.video;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
@@ -158,7 +246,6 @@ export default function MenuPage() {
       <div className="pt-20 pb-12 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
           <BookOpen className="w-10 h-10 text-amber-400" />
-
           <p className="text-amber-400 text-sm tracking-[0.5em] uppercase">
             CONA LOUNGE
           </p>
@@ -168,131 +255,107 @@ export default function MenuPage() {
           OUR MENU
         </h1>
 
-        <p className="text-zinc-400 mt-3">
-          Drag left or right to flip pages
+        <p className="text-zinc-400 mt-3 text-lg">
+          Premium Spirits • Signature Cocktails • Fine Wines • 
+          Sushi • Pizza • Gourmet Mains • Desserts
         </p>
       </div>
 
-      {/* BOOK */}
-      <div className="max-w-5xl mx-auto px-6 pb-20">
-        <motion.div
-          className="relative h-[720px] perspective-[1800px]"
-          drag="x"
-          dragConstraints={{ left: -100, right: 100 }}
-          dragElastic={0.2}
-          onDragEnd={handleDragEnd}
-          whileDrag={{ scale: 0.98 }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, rotateY: 15, scale: 0.95 }}
-              animate={{ opacity: 1, rotateY: 0, scale: 1 }}
-              exit={{ opacity: 0, rotateY: -15, scale: 0.95 }}
-              transition={{
-                duration: 0.7,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="absolute inset-0 rounded-3xl overflow-hidden border border-amber-400/20 bg-zinc-950"
+      {/* CATEGORY NAVIGATION */}
+      <div className="max-w-5xl mx-auto px-6 pb-6">
+        <div className="flex flex-wrap gap-3 justify-center mb-10">
+          {menuSections.map((section, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveCategory(idx)}
+              className={`px-6 py-3 rounded-full text-sm font-medium transition-all flex items-center gap-2 border ${
+                idx === activeCategory
+                  ? "bg-amber-400 text-black border-amber-400"
+                  : "border-zinc-700 hover:border-zinc-500 text-zinc-300"
+              }`}
             >
-              <div className="flex h-full">
-                {/* LEFT */}
-                <div className="w-5/12 bg-black/80 p-10 flex flex-col items-center justify-center">
-                  <img
-                    src={current.image}
-                    alt={current.title}
-                    className="w-full aspect-square object-cover rounded-3xl shadow-2xl mb-8"
-                  />
-
-                  <span className="text-7xl mb-6">
-                    {current.emoji}
-                  </span>
-
-                  <h2 className="text-5xl text-center font-bold text-amber-300">
-                    {current.title}
-                  </h2>
-                </div>
-
-                {/* RIGHT */}
-                <div className="w-7/12 p-10 bg-zinc-950 overflow-y-auto">
-                  <div className="space-y-8">
-                    {current.items.map((item, idx) => (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, y: 25 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="border-b border-white/10 pb-6"
-                      >
-                        <div className="flex justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-xl font-semibold">
-                                {item.name}
-                              </h3>
-
-                              {item.is_featured && (
-                                <Star
-                                  size={16}
-                                  className="text-amber-400 fill-amber-400"
-                                />
-                              )}
-                            </div>
-
-                            <p className="text-zinc-400 text-sm mt-2">
-                              {item.description}
-                            </p>
-                          </div>
-
-                          <span className="text-amber-400 text-2xl font-bold">
-                            R {item.price}
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-
-        {/* CONTROLS */}
-        <div className="flex justify-center items-center gap-8 mt-12">
-          <button
-            onClick={prevPage}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-amber-400/30"
-          >
-            <ChevronLeft size={22} />
-            Previous
-          </button>
-
-          <div className="flex gap-3">
-            {sections.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentPage(idx)}
-                className={`w-3.5 h-3.5 rounded-full ${
-                  idx === currentPage
-                    ? "bg-amber-400 scale-125"
-                    : "bg-zinc-700"
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={nextPage}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-amber-400/30"
-          >
-            Next
-            <ChevronRight size={22} />
-          </button>
+              <span>{categoryEmoji[section.title]}</span>
+              {section.title}
+            </button>
+          ))}
         </div>
       </div>
 
-      <p className="text-center text-zinc-500 text-sm pb-10">
-        Dynamic digital menu • All prices in ZAR
+      {/* SELECTED MENU SECTION */}
+      <div className="max-w-5xl mx-auto px-6 pb-20">
+        <motion.div
+          key={activeCategory}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="rounded-3xl overflow-hidden border border-amber-400/20 bg-zinc-950"
+        >
+          <div className="flex flex-col lg:flex-row h-full min-h-[680px]">
+            {/* LEFT - VISUAL (Full Original Size - No Cropping) */}
+            <div className="lg:w-5/12 bg-black/80 p-10 flex flex-col items-center justify-center">
+              {isVideo ? (
+                <video
+                  src={current.video}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl mb-8"
+                />
+              ) : (
+                <img
+                  src={current.image}
+                  alt={current.title}
+                  className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl mb-8"
+                />
+              )}
+              <span className="text-7xl mb-6">{categoryEmoji[current.title]}</span>
+              <h2 className="text-5xl text-center font-bold text-amber-300 tracking-tight">
+                {current.title.toUpperCase()}
+              </h2>
+            </div>
+
+            {/* RIGHT - ITEMS */}
+            <div className="lg:w-7/12 p-10 bg-zinc-950 overflow-y-auto">
+              <div className="space-y-8">
+                {current.items.map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="border-b border-white/10 pb-6 last:border-none"
+                  >
+                    <div className="flex justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-start gap-2">
+                          <h3 className="text-xl font-semibold leading-tight">
+                            {item.name}
+                          </h3>
+                          {item.is_featured && (
+                            <Star size={18} className="text-amber-400 fill-amber-400 mt-0.5" />
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-zinc-400 text-sm mt-1.5 leading-snug">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-amber-400 text-2xl font-bold">R{item.price}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      <p className="text-center text-zinc-500 text-sm pb-12">
+        CONA Lounge • All prices in ZAR • Prices subject to change
       </p>
     </div>
   );

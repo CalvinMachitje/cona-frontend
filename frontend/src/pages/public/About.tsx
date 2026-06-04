@@ -2,20 +2,12 @@
 import { motion } from "framer-motion";
 import NeonBackground from "@/components/NeonBackground";
 
-// Assets
-import venue1 from "@/assets/Cona images/inside_view.webp";
-import venue2 from "@/assets/Cona images/inside_view2.webp";
-import venue3 from "@/assets/Cona images/inside_view3.webp";
-import venue4 from "@/assets/Cona images/inside_view4.webp";
-
 const stats = [
   { value: "7 Days", label: "Open Weekly" },
   { value: "10AM – 2AM", label: "Operating Hours" },
   { value: "100+", label: "Guests Hosted Weekly" },
   { value: "Coligny", label: "Proudly Local" },
 ];
-
-const venueImages = [venue1, venue2, venue3, venue4];
 
 export default function About() {
   return (
@@ -59,41 +51,6 @@ export default function About() {
               in the heart of Coligny.
             </div>
           </motion.div>
-        </section>
-
-        {/* Venue Images */}
-        <section className="container mx-auto px-5 sm:px-6 pb-20 md:pb-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mb-10 md:mb-12 text-center"
-          >
-            <p className="text-xs uppercase tracking-[0.4em] text-primary mb-3">
-              Our Venue
-            </p>
-            <h2 className="font-display text-4xl sm:text-5xl">Inside CONA</h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            {venueImages.map((img, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="overflow-hidden rounded-3xl border border-zinc-800 group"
-              >
-                <img
-                  src={img}
-                  alt={`CONA Venue ${index + 1}`}
-                  loading="lazy"
-                  className="w-full h-auto aspect-[16/10] sm:aspect-[16/9] object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </motion.div>
-            ))}
-          </div>
         </section>
 
         {/* Stats */}
