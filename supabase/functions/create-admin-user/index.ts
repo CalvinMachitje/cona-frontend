@@ -1,4 +1,5 @@
 // supabase/functions/create-admin-user/index.ts
+
 import { createClient } from "@supabase/supabase-js";
 import { env } from "../_shared/env.ts";
 
@@ -10,8 +11,7 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
-const isDevelopment =
-  (env as any).APP_ENV === "development" || (env as any).DENO_ENV === "development";
+const isDevelopment = env.APP_ENV === "development";
 
 async function sendEmail(payload: {
   to: string[];
@@ -20,23 +20,28 @@ async function sendEmail(payload: {
 }) {
   if (isDevelopment) {
     console.log("Using Mailtrap (development mode)");
+
     try {
-      const response = await fetch("https://send.api.mailtrap.io/api/send", {
-        method: "POST",
-        headers: {
-          "Api-Token": (env as any).MAILTRAP_TOKEN,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: {
-            email: env.FROM_EMAIL,
-            name: env.FROM_NAME,
+      const response = await fetch(
+        "https://send.api.mailtrap.io/api/send",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.MAILTRAP_TOKEN}`,
+            "Content-Type": "application/json",
           },
-          to: payload.to.map((email) => ({ email })),
-          subject: payload.subject,
-          text: payload.text,
-        }),
-      });
+          body: JSON.stringify({
+            from: {
+              email: env.FROM_EMAIL,
+              name: env.FROM_NAME,
+            },
+            to: payload.to.map((email) => ({ email })),
+            subject: payload.subject,
+            text: payload.text,
+            category: "Admin User Creation",
+          }),
+        }
+      );
 
       if (!response.ok) {
         console.error("Mailtrap failed:", await response.text());
@@ -46,11 +51,12 @@ async function sendEmail(payload: {
     } catch (err) {
       console.error("Mailtrap exception:", err);
     }
+
     return;
   }
 
-  // Production - Resend
   console.log("Using Resend (production mode)");
+
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -87,10 +93,27 @@ Deno.serve(async (req: Request) => {
   try {
     console.log("Create Admin User function started");
 
-    const { full_name, email, phone, password } = await req.json();
+    const body = await req.json();
+
+    const full_name = body.full_name?.trim();
+    const email = body.email?.trim().toLowerCase();
+    const phone = body.phone?.trim() || null;
+    const password = body.password;
 
     if (!full_name || !email || !password) {
-      throw new Error("Missing required fields: full_name, email, password");
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing required fields: full_name, email, password",
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
 
     const supabase = createClient(
@@ -98,35 +121,103 @@ Deno.serve(async (req: Request) => {
       env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // 1. Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        phone: phone || null,
-      },
-    });
+    // =====================================================
+    // CHECK IF USER ALREADY EXISTS IN PUBLIC USERS TABLE
+    // =====================================================
 
-    if (authError) throw authError;
+    const { data: existingUser, error: existingUserError } =
+      await supabase
+        .from("users")
+        .select("id,email")
+        .eq("email", email)
+        .maybeSingle();
+
+    if (existingUserError) {
+      throw existingUserError;
+    }
+
+    if (existingUser) {
+      return new Response(
+        JSON.stringify({
+          error: "An account with this email address already exists.",
+          code: "EMAIL_EXISTS",
+        }),
+        {
+          status: 409,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // =====================================================
+    // CREATE AUTH USER
+    // =====================================================
+
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name,
+          phone,
+        },
+      });
+
+    if (authError) {
+      if ((authError as any).code === "email_exists") {
+        return new Response(
+          JSON.stringify({
+            error: "An account with this email address already exists.",
+            code: "EMAIL_EXISTS",
+          }),
+          {
+            status: 409,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      throw authError;
+    }
+
+    if (!authData?.user?.id) {
+      throw new Error(
+        "Supabase Auth user creation succeeded but no user ID was returned."
+      );
+    }
 
     const userId = authData.user.id;
 
-    // 2. Insert into public.users table
+    // =====================================================
+    // INSERT USER RECORD
+    // =====================================================
+
     const { error: userError } = await supabase
       .from("users")
       .insert({
         id: userId,
         full_name,
         email,
-        phone: phone || null,
+        phone,
         role: "admin",
       });
 
-    if (userError) throw userError;
+    if (userError) {
+      await supabase.auth.admin.deleteUser(userId);
+      throw userError;
+    }
 
-    // 3. Insert into admin_profiles
+    // =====================================================
+    // INSERT ADMIN PROFILE
+    // =====================================================
+
     const { error: profileError } = await supabase
       .from("admin_profiles")
       .insert({
@@ -140,23 +231,43 @@ Deno.serve(async (req: Request) => {
         },
       });
 
-    if (profileError) console.error("Profile creation warning:", profileError);
+    if (profileError) {
+      await supabase.auth.admin.deleteUser(userId);
 
-    // 4. Send welcome email
-    await sendEmail({
-      to: [email],
-      subject: "Welcome to CONA Lounge Admin Portal",
-      text: `
+      await supabase
+        .from("users")
+        .delete()
+        .eq("id", userId);
+
+      throw profileError;
+    }
+
+    // =====================================================
+    // SEND WELCOME EMAIL
+    // =====================================================
+
+    try {
+      await sendEmail({
+        to: [email],
+        subject: "Welcome to CONA Lounge Admin Portal",
+        text: `
 Hello ${full_name},
 
 Your administrator account has been successfully created.
 
-You can now log in at: ${env.APP_URL || "https://conalounge.co.za"}/admin/login
+You can now log in at:
+${(env as any).APP_URL || "https://conalounge.co.za"}/admin/login
 
 Best regards,
 CONA Lounge Management
-      `.trim(),
-    });
+        `.trim(),
+      });
+    } catch (emailError) {
+      console.error(
+        "Welcome email failed but user was created successfully:",
+        emailError
+      );
+    }
 
     console.log("Admin user created successfully:", userId);
 
@@ -168,7 +279,10 @@ CONA Lounge Management
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       }
     );
   } catch (err: any) {
@@ -176,11 +290,14 @@ CONA Lounge Management
 
     return new Response(
       JSON.stringify({
-        error: err.message || "Failed to create admin user",
+        error: err?.message || "Failed to create admin user",
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       }
     );
   }
