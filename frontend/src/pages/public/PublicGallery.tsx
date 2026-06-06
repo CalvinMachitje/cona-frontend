@@ -83,7 +83,7 @@ export default function Gallery() {
           </h1>
 
           <p className="text-zinc-400 max-w-2xl mx-auto text-lg">
-            Explore our venue, premium drinks, and delicious meals.
+            Explore our venue, lifestyle, and more through our curated gallery of images. Each photo captures the essence of CONA, showcasing our unique ambiance, vibrant lifestyle, and unforgettable moments. Dive into the visual story of CONA and experience the vibe before you even step in.
           </p>
         </motion.div>
 

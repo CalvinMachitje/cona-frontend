@@ -11,7 +11,10 @@ const corsHeaders = {
 };
 
 const isDevelopment =
-  (env as any).APP_ENV === "development" || (env as any).DENO_ENV === "development";
+  (env as any).APP_ENV === "production" || (env as any).DENO_ENV === "production";
+
+console.log("APP_ENV =", env.APP_ENV);
+console.log("Using development mode =", isDevelopment);
 
 async function sendEmail(payload: {
   to: string[];
