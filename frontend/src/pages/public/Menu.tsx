@@ -173,13 +173,16 @@ const menuSections: MenuSection[] = [
     image: "",
     video: mains,
     items: [
-      { id: "m1", name: "Fillet Steak", description: "Aged 300g fillet with olive oil and coarse salt rub", price: 285 },
-      { id: "m2", name: "Pork Belly", description: "Succulent slow cooked pork belly with crispy crackling", price: 200 },
-      { id: "m3", name: "Fisherman's Catch", description: "Hake, prawns, squid heads & calamari rings", price: 250 },
-      { id: "m4", name: "Kingklip", description: "Meaty fish portion grilled in lemon butter sauce", price: 300 },
-      { id: "m5", name: "Chicken Espatada", description: "Deboned chicken thighs marinated overnight", price: 180 },
-      { id: "m6", name: "Pig & Chicken", description: "300g loin ribs", price: 275 },
-      { id: "m7", name: "T-Bone", description: "500g dry aged T-bone", price: 260 },
+      { id: "m1", name: "Fillet Steak", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 190 },
+      { id: "m2", name: "Pig & Chicken", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 170 },
+      { id: "m3", name: "Oxtail", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 200 },
+      { id: "m4", name: "Kingklip", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 200 },
+      { id: "m5", name: "Beef Stew", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
+      { id: "m6", name: "Lamb Stew", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 120 },
+      { id: "m7", name: "Maotwana & Malana", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 90 },
+      { id: "m8", name: "Mala Mogodu", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
+      { id: "m9", name: "Chicken Stew", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
+      { id: "m10", name: "Tshotlho", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
     ],
   },
   {
@@ -228,7 +231,7 @@ const menuSections: MenuSection[] = [
     title: "Special Combos",
     isSpecials: true,
     specialImages: [special, special2, special3, special4, special5, special6],
-    items: [], // Empty because we only show images
+    items: [],
   },
 ];
 
