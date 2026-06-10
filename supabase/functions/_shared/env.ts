@@ -1,42 +1,47 @@
 // supabase/functions/_shared/env.ts
 
 type RequiredEnv =
-  | "RESEND_API_KEY"
-  | "MAILTRAP_TOKEN"
-  | "RECAPTCHA_SECRET_KEY"
+  | "SUPABASE_URL"
+  | "SUPABASE_SERVICE_ROLE_KEY"
+  | "APP_ENV"
   | "FROM_EMAIL"
   | "FROM_NAME"
-  | "APP_ENV";
+  | "MAILTRAP_TOKEN"
+  | "RECAPTCHA_SECRET_KEY";
 
-function getEnv(name: RequiredEnv): string {
+function getEnv(name: string): string {
   const value = Deno.env.get(name);
-
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
-
   return value;
 }
 
+function getOptionalEnv(name: string): string | undefined {
+  return Deno.env.get(name) ?? undefined;
+}
+
 export const env = {
-  // Built-in Supabase variables
-  SUPABASE_URL: Deno.env.get("SUPABASE_URL") ?? "",
-  SUPABASE_SERVICE_ROLE_KEY:
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  // Supabase
+  SUPABASE_URL: getEnv("SUPABASE_URL"),
+  SUPABASE_SERVICE_ROLE_KEY: getEnv("SUPABASE_SERVICE_ROLE_KEY"),
 
-  // App config
+  // Application
   APP_ENV: getEnv("APP_ENV"),
+  FROM_EMAIL: getEnv("FROM_EMAIL"),
+  FROM_NAME: getEnv("FROM_NAME"),
 
-  // Email providers
-  RESEND_API_KEY: getEnv("RESEND_API_KEY"),
-  MAILTRAP_TOKEN: getEnv("MAILTRAP_TOKEN"),
+  // Mailtrap SMTP
+  SMTP_HOST: "live.smtp.mailtrap.io",
+  SMTP_PORT: 587,
+  SMTP_USER: "api",
+  SMTP_PASS: getEnv("MAILTRAP_TOKEN"),
 
   // Security
   RECAPTCHA_SECRET_KEY: getEnv("RECAPTCHA_SECRET_KEY"),
 
-  // Email sender
-  FROM_EMAIL: getEnv("FROM_EMAIL"),
-  FROM_NAME: getEnv("FROM_NAME"),
+  // Optional
+  APP_URL: getOptionalEnv("APP_URL"),
 } as const;
 
 export type Env = typeof env;

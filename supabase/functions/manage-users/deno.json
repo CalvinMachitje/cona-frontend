@@ -1,6 +1,7 @@
 {
   "imports": {
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
+    "nodemailer": "https://esm.sh/nodemailer@6.9.15"
   },
   "compilerOptions": {
     "lib": ["deno.window", "dom"]
