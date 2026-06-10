@@ -1,5 +1,6 @@
 // supabase/functions/_shared/emailTemplates.ts
 
+// ====================== PUBLIC LOGO URL ======================
 const LOGO_URL = "https://gyqwyifuiomlzzmrikch.supabase.co/storage/v1/object/public/public-assets/logo.webp";
 
 export const bookingConfirmationHtml = (booking: any, table: any) => `
@@ -10,8 +11,8 @@ export const bookingConfirmationHtml = (booking: any, table: any) => `
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Booking Confirmed - CONA Lounge</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0a; color: #ffffff; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 20px auto; background: #1f2937; border-radius: 16px; overflow: hidden; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6ececff; color: #ffffff; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #0254c5ff; border-radius: 16px; overflow: hidden; }
     .header { background: linear-gradient(135deg, #22d3ee, #3b82f6); padding: 30px 20px; text-align: center; }
     .logo { max-width: 120px; height: auto; margin-bottom: 10px; }
     .content { padding: 40px 30px; line-height: 1.6; }
@@ -24,8 +25,8 @@ export const bookingConfirmationHtml = (booking: any, table: any) => `
   <div class="container">
     <div class="header">
       <img src="${LOGO_URL}" alt="Cona Lounge" class="logo" />
-      <h1 style="margin: 10px 0 0 0; color: #000; font-size: 28px; letter-spacing: 2px;">CONA LOUNGE</h1>
-      <p style="margin: 5px 0 0 0; color: #000; font-weight: 500;">Coligny • Premium Nightlife</p>
+      <h1 style="margin: 10px 0 0 0; color: #ffffffff; font-size: 28px; letter-spacing: 2px;">CONA LOUNGE</h1>
+      <p style="margin: 5px 0 0 0; color: #ffffffff; font-weight: 500;">Coligny • Premium Nightlife</p>
     </div>
     <div class="content">
       <h2 style="color: #22d3ee;">Your Booking is Confirmed!</h2>
@@ -50,6 +51,64 @@ export const bookingConfirmationHtml = (booking: any, table: any) => `
 </body>
 </html>`;
 
+export const bookingConfirmationText = (booking: any, table: any) => `
+CONA LOUNGE - BOOKING CONFIRMED
+
+Dear ${booking.guest_name},
+
+Your reservation is confirmed:
+
+Date: ${new Date(booking.booking_date).toLocaleDateString('en-ZA')}
+Time: ${booking.start_time} – ${booking.end_time}
+Table: ${table?.table_number || 'VIP'} (${table?.type || 'Standard'})
+Guests: ${booking.guests}
+Reference Code: ${booking.reference_code}
+
+Please keep this reference for check-in.
+
+We look forward to welcoming you!
+
+CONA Lounge Team
+Coligny • 083 200 2516
+`;
+
+export const contactAdminNotificationHtml = (data: { name: string; email: string; subject: string; message: string }) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Contact Inquiry - CONA Lounge</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #000000ff; color: #ffffff; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #1f2937; border-radius: 16px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #f59e0b, #ea580c); padding: 30px; text-align: center; }
+    .logo { max-width: 110px; height: auto; margin-bottom: 10px; }
+    .content { padding: 35px 30px; line-height: 1.7; }
+    .field { margin: 16px 0; }
+    .label { color: #94a3b8; font-size: 0.9em; }
+    .value { color: #22d3ee; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="${LOGO_URL}" alt="Cona Lounge" class="logo" />
+      <h1 style="margin:0; color:#000;">NEW CONTACT INQUIRY</h1>
+      <p style="margin:8px 0 0 0; color:#000;">CONA Lounge Admin</p>
+    </div>
+    <div class="content">
+      <div class="field"><span class="label">From:</span><br><span class="value">${data.name} (${data.email})</span></div>
+      <div class="field"><span class="label">Subject:</span><br><span class="value">${data.subject}</span></div>
+      <div class="field"><span class="label">Message:</span><br><span class="value">${data.message.replace(/\n/g, '<br>')}</span></div>
+    </div>
+    <div style="text-align:center; padding:20px; font-size:13px; color:#9ca3af;">
+      CONA Lounge • Coligny
+    </div>
+  </div>
+</body>
+</html>`;
+
 export const contactCustomerReplyHtml = (name: string) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -69,7 +128,7 @@ export const contactCustomerReplyHtml = (name: string) => `
   <div class="container">
     <div class="header">
       <img src="${LOGO_URL}" alt="Cona Lounge" class="logo" />
-      <h1 style="margin: 10px 0 0 0; color: #000;">CONA LOUNGE</h1>
+      <h1 style="margin:10px 0 0 0; color:#000;">CONA LOUNGE</h1>
     </div>
     <div class="content">
       <h2>Thank You, ${name}!</h2>
