@@ -1,4 +1,4 @@
-// frontend/src/pages/public/Menu.tsx
+// frontend/src/pages/public/menu.tsx
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -26,6 +26,7 @@ import special3 from "@/assets/dinepe/Cona images/daily special.jpg";
 import special4 from "@/assets/dinepe/Cona images/flame grill combo.jpg";
 import special5 from "@/assets/dinepe/Cona images/food7.jpg";
 import special6 from "@/assets/dinepe/Cona images/wors roll.jpg";
+import { div } from "three/src/nodes/math/OperatorNode.js";
 
 type MenuItem = {
   id: string;
@@ -84,31 +85,34 @@ const menuSections: MenuSection[] = [
     title: "Shots & Shooters",
     image: shots,
     items: [
-      { id: "sh1", name: "Tequilla Silva", description: "", price: 35 },
-      { id: "sh2", name: "Tequilla Gold", description: "", price: 35 },
-      { id: "sh3", name: "Don Julio", description: "", price: 60 },
-      { id: "sh4", name: "Jameson", description: "", price: 30 },
-      { id: "sh5", name: "Jonny Walker", description: "", price: 30 },
-      { id: "sh6", name: "Hennessy", description: "", price: 40 },
-      { id: "sh7", name: "Remy Martin", description: "", price: 35 },
+      { id: "sh1", name: "Passion Fruit", description: "", price: 12 },
+      { id: "sh2", name: "Lime", description: "", price: 12 },
+      { id: "sh3", name: "Kola Tonic", description: "", price: 12 },
+      { id: "sh4", name: "Blowjob", description: "", price: 40 },
+      { id: "sh5", name: "Springbok", description: "", price: 35 },
+      { id: "sh6", name: "Sowetan Toilet", description: "", price: 35 },
+      { id: "sh7", name: "Liquid Cocain", description: "", price: 40 },
     ],
   },
   {
     title: "Spirits",
     image: spirits1,
     items: [
-      { id: "sp1", name: "Johnny Walker", description: "Bottle", price: 700 },
-      { id: "sp2", name: "Hennessy VS", description: "Bottle", price: 900 },
-      { id: "sp3", name: "Hennessy VSOP", description: "Bottle", price: 1350 },
-      { id: "sp4", name: "Jameson", description: "Bottle", price: 700 },
-      { id: "sp5", name: "Jameson Select Reserve", description: "Bottle", price: 950 },
-      { id: "sp6", name: "Remy Martin", description: "Bottle", price: 1200 },
-      { id: "sp7", name: "Remy Martin 1738", description: "Bottle", price: 2000 },
-      { id: "sp8", name: "Glenfiddich", description: "Bottle", price: 900 },
-      { id: "sp9", name: "Don Julio", description: "Bottle", price: 1500 },
-      { id: "sp10", name: "Jägermeister", description: "Bottle", price: 600 },
-      { id: "sp11", name: "Glenlivet", description: "Bottle", price: 750 },
-
+      { id: "sp1", name: "Martel Blue Swift", description: "Shot / Bottle", price: 75 },
+      { id: "sp2", name: "Martel VS", description: "Shot / Bottle", price: 60 },
+      { id: "sp3", name: "Hennessy VS", description: "Shot / Bottle", price: 55 },
+      { id: "sp4", name: "Hennessy VSOP", description: "Shot / Bottle", price: 75 },
+      { id: "sp5", name: "Hennessy XO", description: "", price: 6000 },
+      { id: "sp6", name: "Jameson", description: "Shot / Bottle", price: 40 },
+      { id: "sp7", name: "Jack Daniels", description: "Shot / Bottle", price: 35 },
+      { id: "sp8", name: "Glenlivet 12 Yr", description: "Shot / Bottle", price: 70 },
+      { id: "sp9", name: "Hendricks", description: "Shot / Bottle", price: 45 },
+      { id: "sp10", name: "Tanqueray", description: "Shot / Bottle", price: 35 },
+      { id: "sp11", name: "Absolut", description: "Shot / Bottle", price: 45 },
+      { id: "sp12", name: "Smirnoff", description: "Shot / Bottle", price: 30 },
+      { id: "sp13", name: "Don Julio Blanco", description: "Shot / Bottle", price: 70 },
+      { id: "sp14", name: "Jägermeister", description: "", price: 45 },
+      { id: "sp15", name: "Kahlua", description: "", price: 25 },
     ],
   },
   {
@@ -128,8 +132,8 @@ const menuSections: MenuSection[] = [
     items: [
       { id: "ch1", name: "Armand de Brignac Brut", description: "", price: 12000 },
       { id: "ch2", name: "Dom Perignon Blanc", description: "", price: 9500 },
-      { id: "ch3", name: "Veuve Clicquot", description: "", price: 1600 },
-      { id: "ch4", name: "Moet & Chandon", description: "", price: 1500 },
+      { id: "ch3", name: "Veuve Clicquot", description: "", price: 1800 },
+      { id: "ch4", name: "Moet & Chandon", description: "", price: 1700 },
       { id: "ch5", name: "Krone Brut", description: "", price: 400 },
     ],
   },
@@ -138,10 +142,10 @@ const menuSections: MenuSection[] = [
     image: beers,
     items: [
       { id: "b1", name: "Castle Lite", description: "", price: 30 },
-      { id: "b2", name: "Castle Lager", description: "", price: 25 },
-      { id: "b3", name: "Corona Extra", description: "", price: 35 },
+      { id: "b2", name: "Castle Lager", description: "", price: 32 },
+      { id: "b3", name: "Corona Extra", description: "", price: 45 },
       { id: "b4", name: "Heineken", description: "", price: 40 },
-      { id: "b5", name: "Stella Artois", description: "", price: 35 },
+      { id: "b5", name: "Stella Artois", description: "", price: 40 },
     ],
   },
   {
@@ -170,16 +174,13 @@ const menuSections: MenuSection[] = [
     image: "",
     video: mains,
     items: [
-      { id: "m1", name: "Fillet Steak", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 190 },
-      { id: "m2", name: "Pig & Chicken", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 170 },
-      { id: "m3", name: "Oxtail", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 200 },
-      { id: "m4", name: "Kingklip", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 200 },
-      { id: "m5", name: "Beef Stew", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
-      { id: "m6", name: "Lamb Stew", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 120 },
-      { id: "m7", name: "Maotwana & Malana", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 90 },
-      { id: "m8", name: "Mala Mogodu", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
-      { id: "m9", name: "Chicken Stew", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
-      { id: "m10", name: "Tshotlho", description: "Starch: Rice, Samp, Pap, Mabele, Dumplings. Sides: Chakalaka, Cabbage, Spinach, Pumpkin, Mash Potatoes, Sweet Potato", price: 80 },
+      { id: "m1", name: "Fillet Steak", description: "Aged 300g fillet with olive oil and coarse salt rub", price: 285 },
+      { id: "m2", name: "Pork Belly", description: "Succulent slow cooked pork belly with crispy crackling", price: 200 },
+      { id: "m3", name: "Fisherman's Catch", description: "Hake, prawns, squid heads & calamari rings", price: 250 },
+      { id: "m4", name: "Kingklip", description: "Meaty fish portion grilled in lemon butter sauce", price: 300 },
+      { id: "m5", name: "Chicken Espatada", description: "Deboned chicken thighs marinated overnight", price: 180 },
+      { id: "m6", name: "Pig & Chicken", description: "300g loin ribs", price: 275 },
+      { id: "m7", name: "T-Bone", description: "500g dry aged T-bone", price: 260 },
     ],
   },
   {
@@ -228,7 +229,7 @@ const menuSections: MenuSection[] = [
     title: "Special Combos",
     isSpecials: true,
     specialImages: [special, special2, special3, special4, special5, special6],
-    items: [],
+    items: [], // Empty because we only show images
   },
 ];
 
