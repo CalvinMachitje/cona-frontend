@@ -21,7 +21,7 @@ import Promotions from "./pages/customer/promotions";
 // Public Pages
 import Home from "@/pages/public/Home";
 import About from "@/pages/public/About";
-import Menu from "@/pages/public/menu";
+import Menu from "@/pages/public/Menu";
 import Gallery from "@/pages/public/PublicGallery";
 import Booking from "@/pages/public/Bookings";
 import Contact from "@/pages/public/Contact";
