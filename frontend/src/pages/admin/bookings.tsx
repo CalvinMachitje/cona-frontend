@@ -1,5 +1,4 @@
 // frontend/src/pages/admin/bookings.tsx
-
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -51,28 +50,19 @@ export default function Bookings() {
   // =========================
   const loadBookings = async (showLoader = true) => {
     try {
-      if (showLoader) {
-        setLoading(true);
-      } else {
-        setRefreshing(true);
-      }
+      if (showLoader) setLoading(true);
+      else setRefreshing(true);
 
       setError(null);
 
-      const { data, error } = await supabase.functions.invoke(
-        "manage-bookings",
-        {
-          body: {
-            action: "get",
-            booking_date: selectedDate,
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("manage-bookings", {
+        body: {
+          action: "get",
+          booking_date: selectedDate,
+        },
+      });
 
-      if (error) {
-        console.error("BOOKING LOAD ERROR:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       setBookings(data?.data || []);
     } catch (err: any) {
@@ -92,30 +82,19 @@ export default function Bookings() {
     status: Booking["status"]
   ) => {
     try {
-      const { error } = await supabase.functions.invoke(
-        "manage-bookings",
-        {
-          body: {
-            action: "update-status",
-            booking_id: bookingId,
-            status,
-          },
-        }
-      );
+      const { error } = await supabase.functions.invoke("manage-bookings", {
+        body: {
+          action: "update-status",
+          booking_id: bookingId,
+          status,
+        },
+      });
 
-      if (error) {
-        console.error("STATUS UPDATE ERROR:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === bookingId
-            ? {
-                ...booking,
-                status,
-              }
-            : booking
+          booking.id === bookingId ? { ...booking, status } : booking
         )
       );
     } catch (err: any) {
@@ -128,31 +107,19 @@ export default function Bookings() {
   // DELETE BOOKING
   // =========================
   const handleDelete = async (bookingId: string) => {
-    const confirmed = confirm(
-      "Are you sure you want to permanently delete this booking?"
-    );
-
-    if (!confirmed) return;
+    if (!confirm("Are you sure you want to permanently delete this booking?")) return;
 
     try {
-      const { error } = await supabase.functions.invoke(
-        "manage-bookings",
-        {
-          body: {
-            action: "delete",
-            booking_id: bookingId,
-          },
-        }
-      );
+      const { error } = await supabase.functions.invoke("manage-bookings", {
+        body: {
+          action: "delete",
+          booking_id: bookingId,
+        },
+      });
 
-      if (error) {
-        console.error("DELETE ERROR:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      setBookings((prev) =>
-        prev.filter((booking) => booking.id !== bookingId)
-      );
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
     } catch (err: any) {
       console.error("DELETE FAILED:", err);
       alert(err.message || "Failed to delete booking");
@@ -160,25 +127,16 @@ export default function Bookings() {
   };
 
   // =========================
-  // FILTER BOOKINGS
+  // FILTERS
   // =========================
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
       const matchesSearch =
-        booking.guest_name
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        booking.guest_email
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        booking.table_number
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase());
+        booking.guest_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.guest_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.table_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === "all"
-          ? true
-          : booking.status === statusFilter;
+      const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -191,56 +149,31 @@ export default function Bookings() {
     return {
       total: filteredBookings.length,
       pending: filteredBookings.filter((b) => b.status === "pending").length,
-      confirmed: filteredBookings.filter((b) => b.status === "confirmed")
-        .length,
-      cancelled: filteredBookings.filter((b) => b.status === "cancelled")
-        .length,
-      guests: filteredBookings.reduce(
-        (total, booking) => total + Number(booking.guests || 0),
-        0
-      ),
+      confirmed: filteredBookings.filter((b) => b.status === "confirmed").length,
+      cancelled: filteredBookings.filter((b) => b.status === "cancelled").length,
+      guests: filteredBookings.reduce((sum, b) => sum + Number(b.guests || 0), 0),
     };
   }, [filteredBookings]);
 
-  // =========================
-  // EFFECTS
-  // =========================
   useEffect(() => {
     loadBookings();
   }, [selectedDate]);
 
-  // =========================
-  // LOADING
-  // =========================
   if (loading) {
     return (
       <div className="p-6 text-white">
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 w-72 bg-zinc-800 rounded-xl" />
-          <div className="h-32 bg-zinc-900 rounded-2xl" />
-          <div className="h-96 bg-zinc-900 rounded-2xl" />
-        </div>
+        <div className="animate-pulse space-y-4">...</div>
       </div>
     );
   }
 
-  // =========================
-  // ERROR
-  // =========================
   if (error) {
     return (
       <div className="p-6 text-white">
         <div className="bg-red-500/10 border border-red-500 text-red-400 p-5 rounded-2xl">
-          <h2 className="text-xl font-semibold mb-2">
-            Failed to load bookings
-          </h2>
-
+          <h2 className="text-xl font-semibold mb-2">Failed to load bookings</h2>
           <p>{error}</p>
-
-          <button
-            onClick={() => loadBookings()}
-            className="mt-5 px-5 py-2 bg-white text-black rounded-xl font-medium"
-          >
+          <button onClick={() => loadBookings()} className="mt-5 px-5 py-2 bg-white text-black rounded-xl font-medium">
             Retry
           </button>
         </div>
@@ -250,46 +183,25 @@ export default function Bookings() {
 
   return (
     <div className="p-6 text-white space-y-6">
-      {/* ========================= */}
-      {/* HEADER */}
-      {/* ========================= */}
-
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold">
-            Booking Management
-          </h1>
-
-          <p className="text-zinc-400 mt-2">
-            Automated booking administration dashboard
-          </p>
+          <h1 className="text-4xl font-bold">Booking Management</h1>
+          <p className="text-zinc-400 mt-2">Customer booking administration dashboard</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => loadBookings(false)}
-            className="flex items-center gap-2 bg-zinc-900 border border-zinc-700 px-4 py-3 rounded-xl hover:bg-zinc-800 transition"
-          >
-            <RefreshCw
-              size={18}
-              className={refreshing ? "animate-spin" : ""}
-            />
-            Refresh
-          </button>
-        </div>
+        <button
+          onClick={() => loadBookings(false)}
+          className="flex items-center gap-2 bg-zinc-900 border border-zinc-700 px-4 py-3 rounded-xl hover:bg-zinc-800 transition"
+        >
+          <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
+          Refresh
+        </button>
       </div>
 
-      {/* ========================= */}
-      {/* FILTERS */}
-      {/* ========================= */}
-
+      {/* Filters */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="relative">
-          <Search
-            size={18}
-            className="absolute left-4 top-4 text-zinc-500"
-          />
-
+          <Search size={18} className="absolute left-4 top-4 text-zinc-500" />
           <input
             type="text"
             placeholder="Search customer, email, or table..."
@@ -300,11 +212,7 @@ export default function Bookings() {
         </div>
 
         <div className="relative">
-          <CalendarDays
-            size={18}
-            className="absolute left-4 top-4 text-zinc-500"
-          />
-
+          <CalendarDays size={18} className="absolute left-4 top-4 text-zinc-500" />
           <input
             type="date"
             value={selectedDate}
@@ -326,65 +234,43 @@ export default function Bookings() {
         </select>
       </div>
 
-      {/* ========================= */}
-      {/* STATS */}
-      {/* ========================= */}
-
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
           <p className="text-zinc-400 text-sm">Total Bookings</p>
           <h2 className="text-3xl font-bold mt-2">{stats.total}</h2>
         </div>
-
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-5">
           <div className="flex items-center gap-2 text-yellow-400">
             <AlertCircle size={18} />
             <p className="text-sm">Pending</p>
           </div>
-
-          <h2 className="text-3xl font-bold mt-2">
-            {stats.pending}
-          </h2>
+          <h2 className="text-3xl font-bold mt-2">{stats.pending}</h2>
         </div>
-
         <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-5">
           <div className="flex items-center gap-2 text-green-400">
             <CheckCircle2 size={18} />
             <p className="text-sm">Confirmed</p>
           </div>
-
-          <h2 className="text-3xl font-bold mt-2">
-            {stats.confirmed}
-          </h2>
+          <h2 className="text-3xl font-bold mt-2">{stats.confirmed}</h2>
         </div>
-
         <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5">
           <div className="flex items-center gap-2 text-red-400">
             <XCircle size={18} />
             <p className="text-sm">Cancelled</p>
           </div>
-
-          <h2 className="text-3xl font-bold mt-2">
-            {stats.cancelled}
-          </h2>
+          <h2 className="text-3xl font-bold mt-2">{stats.cancelled}</h2>
         </div>
-
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center gap-2 text-zinc-300">
             <Users size={18} />
             <p className="text-sm">Total Guests</p>
           </div>
-
-          <h2 className="text-3xl font-bold mt-2">
-            {stats.guests}
-          </h2>
+          <h2 className="text-3xl font-bold mt-2">{stats.guests}</h2>
         </div>
       </div>
 
-      {/* ========================= */}
-      {/* BOOKINGS TABLE */}
-      {/* ========================= */}
-
+      {/* Table */}
       <div className="border border-zinc-800 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1200px] text-left">
@@ -401,14 +287,10 @@ export default function Bookings() {
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-
             <tbody>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={9}
-                    className="text-center py-16 text-zinc-500"
-                  >
+                  <td colSpan={9} className="text-center py-16 text-zinc-500">
                     No bookings found for selected filters
                   </td>
                 </tr>
@@ -420,116 +302,72 @@ export default function Bookings() {
                   >
                     <td className="p-4">
                       <div>
-                        <p className="font-semibold">
-                          {booking.guest_name}
-                        </p>
-
-                        <p className="text-sm text-zinc-400">
-                          {booking.guest_email}
-                        </p>
-
+                        <p className="font-semibold">{booking.guest_name}</p>
+                        <p className="text-sm text-zinc-400">{booking.guest_email}</p>
                         {booking.guest_phone && (
-                          <p className="text-xs text-zinc-500 mt-1">
-                            {booking.guest_phone}
-                          </p>
+                          <p className="text-xs text-zinc-500 mt-1">{booking.guest_phone}</p>
                         )}
                       </div>
                     </td>
-
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <CalendarDays size={16} />
-                        {new Date(
-                          booking.booking_date
-                        ).toLocaleDateString("en-ZA")}
+                        {new Date(booking.booking_date).toLocaleDateString("en-ZA")}
                       </div>
                     </td>
-
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <Clock3 size={16} />
-
-                        <span>
-                          {booking.start_time} - {booking.end_time}
-                        </span>
+                        {booking.start_time} - {booking.end_time}
                       </div>
                     </td>
-
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <Users size={16} />
                         {booking.guests}
                       </div>
                     </td>
-
                     <td className="p-4">
                       {booking.table_number ? (
                         <div>
-                          <p className="font-medium">
-                            Table {booking.table_number}
-                          </p>
-
-                          <p className="text-xs text-zinc-400">
-                            {booking.table_type}
-                          </p>
-
+                          <p className="font-medium">Table {booking.table_number}</p>
+                          <p className="text-xs text-zinc-400">{booking.table_type}</p>
                           {booking.table_location && (
-                            <p className="text-xs text-zinc-500">
-                              {booking.table_location}
-                            </p>
+                            <p className="text-xs text-zinc-500">{booking.table_location}</p>
                           )}
                         </div>
                       ) : (
-                        <span className="text-yellow-400">
-                          Auto assigning...
-                        </span>
+                        <span className="text-yellow-400">Auto assigning...</span>
                       )}
                     </td>
-
                     <td className="p-4">
                       <select
                         value={booking.status}
                         onChange={(e) =>
-                          handleStatusChange(
-                            booking.id,
-                            e.target.value as Booking["status"]
-                          )
+                          handleStatusChange(booking.id, e.target.value as Booking["status"])
                         }
                         className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 outline-none"
                       >
                         <option value="pending">Pending</option>
-                        <option value="confirmed">
-                          Confirmed
-                        </option>
-                        <option value="cancelled">
-                          Cancelled
-                        </option>
-                        <option value="completed">
-                          Completed
-                        </option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="completed">Completed</option>
                       </select>
                     </td>
-
                     <td className="p-4 max-w-[240px]">
                       <p className="text-sm text-zinc-400 truncate">
                         {booking.special_request || "—"}
                       </p>
                     </td>
-
                     <td className="p-4 text-sm text-zinc-400">
                       {booking.created_at
-                        ? new Date(
-                            booking.created_at
-                          ).toLocaleString("en-ZA")
+                        ? new Date(booking.created_at).toLocaleString("en-ZA")
                         : "—"}
                     </td>
-
                     <td className="p-4">
                       <div className="flex justify-center">
                         <button
-                          onClick={() =>
-                            handleDelete(booking.id)
-                          }
+                          onClick={() => handleDelete(booking.id)}
                           className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition"
                           title="Delete booking"
                         >

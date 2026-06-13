@@ -1,239 +1,168 @@
 // frontend/src/pages/public/menu.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  BookOpen,
-  Star,
-} from "lucide-react";
-
-import champagne from "@/assets/pictures/verve.jpg";
-import cocktail from "@/assets/pictures/cocktail.webp";
-import shots from "@/assets/pictures/shots.jpg";
-import spirits1 from "@/assets/pictures/Spirits1.webp";
-import wines from "@/assets/pictures/wines.webp";
-import beers from "@/assets/pictures/beers.jpg";
-import starters from "@/assets/pictures/starters.webp";
-import lightMeals from "@/assets/pictures/lightmeal.jpg";
-import mains from "@/assets/pictures/mealsVid.mp4";
-import platters from "@/assets/dinepe/Cona images/plater4.jpg";
-import desserts from "@/assets/pictures/desserts.jpg";
-import softDrinks from "@/assets/pictures/softdrinks.jpg";
-import hotBeverages from "@/assets/pictures/hotbeverages.jpg";
-
-import special from "@/assets/dinepe/Cona images/chakalaka.jpg";
-import special2 from "@/assets/dinepe/Cona images/chips.jpg";
-import special3 from "@/assets/dinepe/Cona images/daily special.jpg";
-import special4 from "@/assets/dinepe/Cona images/flame grill combo.jpg";
-import special5 from "@/assets/dinepe/Cona images/food7.jpg";
-import special6 from "@/assets/dinepe/Cona images/wors roll.jpg";
+import { BookOpen, Star, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 type MenuItem = {
   id: string;
-  name?: string;
+  name: string;
   description?: string;
-  price?: number;
-  is_featured?: boolean;
-  image?: string;
+  price: number;
+  image_url?: string;
+  category: string;
+  is_featured: boolean;
+  is_published: boolean;
+  show_on_public: boolean;
+  sort_order: number;
 };
 
 type MenuSection = {
   title: string;
+  items: MenuItem[];
   image?: string;
   video?: string;
-  items: MenuItem[];
   isSpecials?: boolean;
   specialImages?: string[];
 };
 
-const categoryEmoji: Record<string, string> = {
-  "Signature Cocktails": "",
-  "Shots & Shooters": "",
-  "Spirits": "",
-  "Wine": "",
-  "Champagne & MCC": "",
-  "Beer": "",
-  "Starters": "",
-  "Light Meals": "",
-  "Pasta": "",
-  "Mains": "",
-  "Pizza": "",
-  "Platters": "",
-  "Desserts": "",
-  "Soft Drinks & Ciders": "",
-  "Hot Beverages": "",
-  "Special Combos": "🔥",
+const categoryImages: Record<string, string> = {
+  "Signature Cocktails": "/assets/pictures/cocktail.webp",
+  "Shots & Shooters": "/assets/pictures/shots.jpg",
+  "Spirits": "/assets/pictures/Spirits1.webp",
+  "Wine": "/assets/pictures/wines.webp",
+  "Champagne & MCC": "/assets/pictures/verve.jpg",
+  "Beer": "/assets/pictures/beers.jpg",
+  "Starters": "/assets/pictures/starters.webp",
+  "Light Meals": "/assets/pictures/lightmeal.jpg",
+  "Mains": "", // Uses video
+  "Platters": "/assets/dinepe/Cona images/plater4.jpg",
+  "Desserts": "/assets/pictures/desserts.jpg",
+  "Soft Drinks & Ciders": "/assets/pictures/softdrinks.jpg",
+  "Hot Beverages": "/assets/pictures/hotbeverages.jpg",
 };
 
-const menuSections: MenuSection[] = [
-  {
-    title: "Signature Cocktails",
-    image: cocktail,
-    items: [
-      { id: "c1", name: "Strawberry Daiquiri", description: "", price: 85 },
-      { id: "c2", name: "Blue Lagoon", description: "", price: 90 },
-      { id: "c3", name: "Mint Mojito", description: "", price: 75 },
-      { id: "c4", name: "Tequila Sunrise / Sunset", description: "", price: 85 },
-      { id: "c5", name: "Long Island Iced Tea", description: "", price: 110 },
-      { id: "c6", name: "Margarita (Frozen / Shaken)", description: "", price: 90 },
-      { id: "c7", name: "Screwdriver (Frozen OPT)", description: "", price: 85 },
-      { id: "c8", name: "Cosmopolitan", description: "", price: 75 },
-      { id: "c9", name: "Sex on the Beach", description: "", price: 80 },
-    ],
-  },
-  {
-    title: "Shots & Shooters",
-    image: shots,
-    items: [
-      { id: "sh1", name: "Single Shot Tequila Silva", description: "", price: 35 },
-      { id: "sh2", name: "Single Shot Tequila Gold", description: "", price: 35 },
-      { id: "sh3", name: "Don Julio", description: "", price: 60 },
-      { id: "sh4", name: "Jägermeister", description: "", price: 35 },
-      { id: "sh5", name: "Jameson", description: "", price: 30 },
-      { id: "sh6", name: "Johnny Walker", description: "", price: 30 },
-      { id: "sh7", name: "Hennessy", description: "", price: 40 },
-      { id: "sh8", name: "Remy Martin", description: "", price: 35 },
-    ],
-  },
-  {
-    title: "Spirits",
-    image: spirits1,
-    items: [
-      { id: "sp1", name: "Jameson 700ml", description: "Bottle", price: 700 },
-      { id: "sp2", name: "Jameson Select Reserve", description: "Bottle", price: 950 },
-      { id: "sp3", name: "Hennessy VS", description: "Bottle", price: 900 },
-      { id: "sp4", name: "Hennessy VSOP", description: "Bottle", price: 1350 },
-      { id: "sp5", name: "Remy Martin", description: "Bottle", price: 1200 },
-      { id: "sp6", name: "Remy Martin 1738", description: "Bottle", price: 2000 },
-      { id: "sp7", name: "Don Julio", description: "Bottle", price: 1500 },
-      { id: "sp8", name: "Jägermeister", description: "Bottle", price: 600 },
-      { id: "sp9", name: "Glenfiddich", description: "Bottle", price: 900 },
-      { id: "sp10", name: "Glenlivet", description: "Bottle", price: 750 },
-      { id: "sp11", name: "Johnny Walker", description: "Bottle", price: 700 },
-    ],
-  },
-  {
-    title: "Wine",
-    image: wines,
-    items: [
-      { id: "w1", name: "Nederburg Baronne", description: "Red", price: 300 },
-      { id: "w2", name: "Rupert & Rothschild", description: "Red", price: 600 },
-      { id: "w3", name: "Chocolate Block", description: "Red", price: 600 },
-      { id: "w4", name: "Durbanville Hills Sauv Blanc", description: "White", price: 300 },
-      { id: "w5", name: "Warwick Chardonnay", description: "White", price: 550 },
-    ],
-  },
-  {
-    title: "Champagne & MCC",
-    image: champagne,
-    items: [
-      { id: "ch1", name: "Veuve Clicquot", description: "", price: 1600 },
-      { id: "ch2", name: "Moët & Chandon", description: "", price: 1500 },
-    ],
-  },
-  {
-    title: "Beer",
-    image: beers,
-    items: [
-      { id: "b1", name: "Corona", description: "", price: 35 },
-      { id: "b2", name: "Stella Artois", description: "", price: 35 },
-      { id: "b3", name: "Castle Lager", description: "", price: 25 },
-      { id: "b4", name: "Castle Light", description: "", price: 30 },
-    ],
-  },
-  {
-    title: "Starters",
-    image: starters,
-    items: [
-      { id: "st1", name: "Stuffed Calamari", description: "Calamari tubes grilled with feta & cream spinach", price: 120 },
-      { id: "st2", name: "Lemon Pepper Queen Prawns", description: "4x queen prawns grilled with lemon pepper sauce", price: 150 },
-      { id: "st3", name: "Portuguese Chicken Livers", description: "Spicy chicken livers grilled served with toasted ciabatta", price: 90 },
-      { id: "st4", name: "Beef Trinchado", description: "Beef strips grilled & smothered in creamy garlic broth", price: 110 },
-      { id: "st5", name: "Buffalo Wings", description: "Grilled chicken wings with sweet chilli dip", price: 100 },
-    ],
-  },
-  {
-    title: "Light Meals",
-    image: lightMeals,
-    items: [
-      { id: "lm1", name: "Gourmet Sandwich", description: "Grilled chicken breast, hickory ham, English mustard, mayonnaise, cheddar, mozzarella", price: 120 },
-      { id: "lm2", name: "Caesar Salad", description: "Fresh mixed lettuce, croutons, grated parmesan cheese", price: 110 },
-      { id: "lm3", name: "Fried Chicken Wrap", description: "Chicken breast coated in panko, avocado & mayonnaise", price: 140 },
-      { id: "lm4", name: "Garden Salad", description: "Mixed lettuce, cucumber, cherry tomatoes, red onions, feta, olives", price: 100 },
-    ],
-  },
-  {
-    title: "Mains",
-    image: "",
-    video: mains,
-    items: [
-      { id: "m1", name: "Pig & Chicken", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 170 },
-      { id: "m2", name: "Fillet Steak", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 190 },
-      { id: "m3", name: "Kingklip", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 200 },
-      { id: "m4", name: "Oxtail", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 200 },
-      { id: "m5", name: "Beef Stew", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 80 },
-      { id: "m6", name: "Lamb Stew", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 120 },
-      { id: "m7", name: "Maotwana & Malana", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 90 },
-      { id: "m8", name: "Mala Mogodu", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 80 },
-      { id: "m9", name: "Chicken Stew", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 80 },
-      { id: "m10", name: "Tshotlho", description: "Starch: Samp, Rice, Pap, Mabele, Dumpling. Sides: Cabbage, Chakalaka, Spinach, Pumpkin, Mash Potato, Sweet Potato", price: 80 },
-    ],
-  },
-  {
-    title: "Platters",
-    image: platters,
-    items: [
-      { id: "pl1", name: "Seafood Platter (4)", description: "4 Hake, 12 Prawns, Calamari, Squid heads", price: 700 },
-      { id: "pl2", name: "Meat Platter (4)", description: "Steak, Boerewors, Chicken", price: 400 },
-      { id: "pl3", name: "Meat Platter (8)", description: "Ribs, Buffalo wings, Beef sausage, Chicken strips", price: 800 },
-    ],
-  },
-  {
-    title: "Desserts",
-    image: desserts,
-    items: [
-      { id: "d1", name: "Cheese Cake", description: "", price: 85 },
-      { id: "d2", name: "Malva Pudding", description: "", price: 75 },
-      { id: "d3", name: "Chocolate Mud Pie", description: "", price: 90 },
-    ],
-  },
-  {
-    title: "Soft Drinks & Ciders",
-    image: softDrinks,
-    items: [
-      { id: "sd1", name: "Coke / Zero / Light", description: "", price: 25 },
-      { id: "sd2", name: "Sprite / Zero", description: "", price: 25 },
-      { id: "sd3", name: "Red Bull", description: "", price: 45 },
-      { id: "sd4", name: "Bernini Classic / Amber / Mimosa", description: "", price: 35 },
-      { id: "sd5", name: "Hunters Dry / Gold", description: "", price: 35 },
-      { id: "sd6", name: "Savanna", description: "", price: 35 },
-    ],
-  },
-  {
-    title: "Hot Beverages",
-    image: hotBeverages,
-    items: [
-      { id: "hb1", name: "Cappuccino", description: "", price: 45 },
-      { id: "hb2", name: "Cafe Latte", description: "", price: 40 },
-      { id: "hb3", name: "Filter Coffee", description: "", price: 35 },
-      { id: "hb4", name: "Hot Chocolate", description: "", price: 45 },
-      { id: "hb5", name: "Rooibos", description: "", price: 35 },
-    ],
-  },
-  // ==================== SPECIAL COMBOS ====================
-  {
-    title: "Special Combos",
-    isSpecials: true,
-    specialImages: [special, special2, special3, special4, special5, special6],
-    items: [], // Empty because we only show images
-  },
-];
+const mainsVideo = "/assets/pictures/mealsVid.mp4";
 
 export default function MenuPage() {
+  const [menuSections, setMenuSections] = useState<MenuSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState(0);
-  const current = menuSections[activeCategory];
 
-  const isVideo = !!current.video;
+  const loadMenu = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase.functions.invoke("manage-menu", {
+        body: { 
+          action: "get", 
+          show_public_only: true 
+        },
+      });
+
+      if (error) throw error;
+
+      const items: MenuItem[] = data?.data || [];
+
+      // Group items by category
+      const grouped = items.reduce((acc: Record<string, MenuItem[]>, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+      }, {});
+
+      const sections: MenuSection[] = Object.entries(grouped)
+        .map(([title, items]) => ({
+          title,
+          items: items.sort((a, b) => a.sort_order - b.sort_order),
+          image: categoryImages[title],
+          video: title === "Mains" ? mainsVideo : undefined,
+        }))
+        .sort((a, b) => a.title.localeCompare(b.title));
+
+      // Add Special Combos section
+      sections.push({
+        title: "Special Combos",
+        items: [],
+        isSpecials: true,
+        specialImages: [],
+      });
+
+      setMenuSections(sections);
+      if (sections.length > 0) setActiveCategory(0);
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to load menu. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load Special Images from Database
+  const loadSpecialImages = async () => {
+    try {
+      const { data } = await supabase
+        .from("special_images")
+        .select("image_url")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+
+      if (data && data.length > 0) {
+        setMenuSections((prev) =>
+          prev.map((section) =>
+            section.isSpecials
+              ? { ...section, specialImages: data.map((img: any) => img.image_url) }
+              : section
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load special images:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadMenu();
+  }, []);
+
+  useEffect(() => {
+    if (menuSections.length > 0) {
+      loadSpecialImages();
+    }
+  }, [menuSections.length]);
+
+  const current = menuSections[activeCategory] || { title: "", items: [] };
   const isSpecials = current.isSpecials === true;
+  const isVideo = !!current.video;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-12 h-12 animate-spin text-amber-400 mb-4" />
+          <p>Loading Menu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={loadMenu} 
+            className="px-6 py-3 bg-white text-black rounded-xl hover:bg-gray-200"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
@@ -241,18 +170,11 @@ export default function MenuPage() {
       <div className="pt-20 pb-12 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
           <BookOpen className="w-10 h-10 text-amber-400" />
-          <p className="text-amber-400 text-sm tracking-[0.5em] uppercase">
-            CONA LOUNGE
-          </p>
+          <p className="text-amber-400 text-sm tracking-[0.5em] uppercase">CONA LOUNGE</p>
         </div>
-
-        <h1 className="font-display text-7xl md:text-8xl tracking-tighter">
-          OUR MENU
-        </h1>
-
+        <h1 className="font-display text-7xl md:text-8xl tracking-tighter">OUR MENU</h1>
         <p className="text-zinc-400 mt-3 text-lg">
-          Premium Spirits • Signature Cocktails • Fine Wines • 
-          Gourmet Mains • Traditional Dishes
+          Premium Spirits • Signature Cocktails • Fine Wines • Gourmet Mains
         </p>
       </div>
 
@@ -269,7 +191,6 @@ export default function MenuPage() {
                   : "border-zinc-700 hover:border-zinc-500 text-zinc-300"
               }`}
             >
-              <span>{categoryEmoji[section.title]}</span>
               {section.title}
             </button>
           ))}
@@ -285,17 +206,20 @@ export default function MenuPage() {
           transition={{ duration: 0.5 }}
           className="rounded-3xl overflow-hidden border border-amber-400/20 bg-zinc-950"
         >
-          <div className={`flex ${isSpecials ? 'flex-col' : 'flex-col lg:flex-row'} h-full min-h-[680px]`}>
-            {/* LEFT - VISUAL / IMAGES */}
-            <div className={`${isSpecials ? 'w-full p-8' : 'lg:w-5/12 bg-black/80 p-10'} flex flex-col items-center justify-center`}>
+          <div className={`flex ${isSpecials ? "flex-col" : "flex-col lg:flex-row"} h-full min-h-[680px]`}>
+            {/* Visual Side */}
+            <div className={`${isSpecials ? "w-full p-8" : "lg:w-5/12 bg-black/80 p-10"} flex flex-col items-center justify-center`}>
               {isSpecials ? (
                 <div className="grid grid-cols-2 gap-6 w-full max-w-4xl">
                   {current.specialImages?.map((img, index) => (
-                    <div key={index} className="overflow-hidden rounded-3xl shadow-2xl border border-amber-400/30">
-                      <img
-                        src={img}
-                        alt={`Special Combo ${index + 1}`}
-                        className="w-full h-full object-contain bg-black"
+                    <div 
+                      key={index} 
+                      className="overflow-hidden rounded-3xl shadow-2xl border border-amber-400/30"
+                    >
+                      <img 
+                        src={img} 
+                        alt={`Special Combo ${index + 1}`} 
+                        className="w-full h-full object-contain bg-black" 
                       />
                     </div>
                   ))}
@@ -307,27 +231,26 @@ export default function MenuPage() {
                   muted
                   loop
                   playsInline
-                  className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl mb-8"
+                  className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl"
                 />
               ) : (
-                <img
-                  src={current.image}
-                  alt={current.title}
-                  className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl mb-8"
-                />
+                current.image && (
+                  <img
+                    src={current.image}
+                    alt={current.title}
+                    className="w-full max-h-[520px] object-contain rounded-3xl shadow-2xl"
+                  />
+                )
               )}
 
               {!isSpecials && (
-                <>
-                  <span className="text-7xl mb-6">{categoryEmoji[current.title]}</span>
-                  <h2 className="text-5xl text-center font-bold text-amber-300 tracking-tight">
-                    {current.title.toUpperCase()}
-                  </h2>
-                </>
+                <h2 className="text-5xl text-center font-bold text-amber-300 tracking-tight mt-8">
+                  {current.title.toUpperCase()}
+                </h2>
               )}
             </div>
 
-            {/* RIGHT - ITEMS (Hidden for Special Combos) */}
+            {/* Items List */}
             {!isSpecials && (
               <div className="lg:w-7/12 p-10 bg-zinc-950 overflow-y-auto">
                 <div className="space-y-8">
@@ -342,17 +265,13 @@ export default function MenuPage() {
                       <div className="flex justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-start gap-2">
-                            <h3 className="text-xl font-semibold leading-tight">
-                              {item.name}
-                            </h3>
+                            <h3 className="text-xl font-semibold leading-tight">{item.name}</h3>
                             {item.is_featured && (
-                              <Star size={18} className="text-amber-400 fill-amber-400 mt-0.5" />
+                              <Star size={18} className="text-amber-400 fill-amber-400 mt-1" />
                             )}
                           </div>
                           {item.description && (
-                            <p className="text-zinc-400 text-sm mt-1.5 leading-snug">
-                              {item.description}
-                            </p>
+                            <p className="text-zinc-400 text-sm mt-1.5 leading-snug">{item.description}</p>
                           )}
                         </div>
                         <div className="text-right">

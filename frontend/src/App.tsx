@@ -36,6 +36,7 @@ import Bookings from "@/pages/admin/bookings";
 import Payments from "@/pages/admin/payments";
 import AdminLogin from "@/pages/admin/login";
 import AdminRegister from "@/pages/admin/register";
+import AdminGallery from "./pages/admin/gallery";
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
           <Route path="customers" element={<Users />} />
           <Route path="payments" element={<Payments />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="/admin/gallery" element={<AdminGallery />} />
         </Route>
       </Route>
     </Routes>

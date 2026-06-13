@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   X,
+  ImageIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/Cona images/logo.webp";
@@ -18,6 +19,7 @@ const navItems = [
   { label: "Bookings", icon: Calendar, path: "/admin/bookings" },
   { label: "Users", icon: Users, path: "/admin/customers" },
   { label: "Menu", icon: Menu, path: "/admin/menu" },
+  { label: "Gallery", icon: ImageIcon, path: "/admin/gallery" },
   { label: "Payments", icon: CreditCard, path: "/admin/payments" },
   { label: "Settings", icon: Settings, path: "/admin/settings" },
 ];
