@@ -6,7 +6,7 @@ import {
   Trash2,
   X,
   Image as ImageIcon,
-  Plus,
+  Loader2,
 } from "lucide-react";
 
 type GalleryImage = {
@@ -16,6 +16,7 @@ type GalleryImage = {
   sort_order: number;
   description?: string;
   is_active: boolean;
+  created_at: string;
 };
 
 export default function AdminGallery() {
@@ -39,7 +40,8 @@ export default function AdminGallery() {
       if (error) throw error;
       setImages(data || []);
     } catch (err: any) {
-      setError(err.message || "Failed to load gallery");
+      console.error(err);
+      setError("Failed to load gallery images");
     } finally {
       setLoading(false);
     }
@@ -55,6 +57,7 @@ export default function AdminGallery() {
 
     try {
       const fileName = `gallery-${Date.now()}-${file.name}`;
+
       const { error: uploadError } = await supabase.storage
         .from("menu-images")
         .upload(fileName, file, { upsert: true });
@@ -103,7 +106,12 @@ export default function AdminGallery() {
   const filteredImages = images.filter((img) => img.category === selectedCategory && img.is_active);
 
   if (loading) {
-    return <div className="p-6 text-white">Loading gallery...</div>;
+    return (
+      <div className="p-6 text-white">
+        <Loader2 className="animate-spin inline-block mr-2" />
+        Loading gallery...
+      </div>
+    );
   }
 
   return (
@@ -111,7 +119,7 @@ export default function AdminGallery() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">Gallery Management</h1>
-          <p className="text-zinc-400 mt-1">Manage images shown on the public gallery</p>
+          <p className="text-zinc-400 mt-1">Manage images shown on the public gallery page</p>
         </div>
       </div>
 
@@ -119,7 +127,7 @@ export default function AdminGallery() {
       <div className="flex gap-4 border-b border-zinc-800 pb-4">
         <button
           onClick={() => setSelectedCategory("venue")}
-          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+          className={`px-8 py-3 rounded-xl font-medium transition-all ${
             selectedCategory === "venue"
               ? "bg-white text-black"
               : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
@@ -129,7 +137,7 @@ export default function AdminGallery() {
         </button>
         <button
           onClick={() => setSelectedCategory("lifestyle")}
-          className={`px-6 py-3 rounded-xl font-medium transition-all ${
+          className={`px-8 py-3 rounded-xl font-medium transition-all ${
             selectedCategory === "lifestyle"
               ? "bg-white text-black"
               : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
@@ -139,70 +147,76 @@ export default function AdminGallery() {
         </button>
       </div>
 
-      {/* Upload Section */}
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold mb-4">Upload New Image</h3>
-        
-        <div className="flex gap-4 items-end">
+      {/* Upload Section - Prominent */}
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8">
+        <h3 className="text-xl font-semibold mb-6 flex items-center gap-3">
+          <Upload size={24} /> Upload New Gallery Image
+        </h3>
+
+        <div className="flex flex-col md:flex-row gap-6">
           <div className="flex-1">
             <label className="block text-sm text-zinc-400 mb-2">Select Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => e.target.files?.[0] && uploadGalleryImage(e.target.files[0])}
-              className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl"
-              disabled={uploading}
-            />
+            <div className="border-2 border-dashed border-zinc-600 hover:border-zinc-500 rounded-2xl p-8 text-center transition">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files?.[0] && uploadGalleryImage(e.target.files[0])}
+                className="hidden"
+                id="gallery-upload"
+              />
+              <label htmlFor="gallery-upload" className="cursor-pointer flex flex-col items-center">
+                <ImageIcon className="w-12 h-12 text-zinc-400 mb-3" />
+                <span className="text-white font-medium">Click to upload image</span>
+                <span className="text-zinc-500 text-sm mt-1">PNG, JPG, WebP • Max 5MB recommended</span>
+              </label>
+            </div>
           </div>
 
           <div className="flex-1">
             <label className="block text-sm text-zinc-400 mb-2">Description (Optional)</label>
-            <input
-              type="text"
+            <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Main Lounge Area"
-              className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl"
+              placeholder="e.g. Main dance floor area at night"
+              className="w-full h-32 p-4 bg-zinc-800 border border-zinc-700 rounded-2xl resize-y focus:border-white"
             />
           </div>
-
-          <button
-            onClick={() => {/* Trigger file input */}}
-            disabled={uploading}
-            className="px-8 py-3 bg-white text-black rounded-xl font-medium hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2"
-          >
-            <Upload size={18} />
-            {uploading ? "Uploading..." : "Upload"}
-          </button>
         </div>
+        {uploading && <p className="text-amber-400 mt-4 text-center">Uploading image... Please wait</p>}
       </div>
 
-      {/* Gallery Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredImages.length === 0 ? (
-          <div className="col-span-full text-center py-20 text-zinc-400">
-            No images in this category yet. Upload some above.
-          </div>
-        ) : (
-          filteredImages.map((img) => (
-            <div key={img.id} className="relative group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800">
-              <img
-                src={img.image_url}
-                alt={img.description || "Gallery Image"}
-                className="w-full h-64 object-cover"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
-                <p className="text-sm text-zinc-300 line-clamp-2">{img.description}</p>
-              </div>
-              <button
-                onClick={() => deleteImage(img.id)}
-                className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <Trash2 size={18} />
-              </button>
+      {/* Current Images Grid */}
+      <div>
+        <h3 className="text-xl font-semibold mb-4">
+          Current {selectedCategory === "venue" ? "Venue" : "Lifestyle"} Images ({filteredImages.length})
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredImages.length === 0 ? (
+            <div className="col-span-full text-center py-20 text-zinc-400">
+              No images uploaded in this category yet.
             </div>
-          ))
-        )}
+          ) : (
+            filteredImages.map((img) => (
+              <div key={img.id} className="relative group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800">
+                <img
+                  src={img.image_url}
+                  alt={img.description || "Gallery Image"}
+                  className="w-full h-64 object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <p className="text-sm text-zinc-300 line-clamp-2">{img.description}</p>
+                </div>
+                <button
+                  onClick={() => deleteImage(img.id)}
+                  className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

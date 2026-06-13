@@ -10,8 +10,8 @@ import {
   Settings,
   X,
   Save,
-  Image as ImageIcon,
   Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 
 type MenuItem = {
@@ -57,7 +57,7 @@ const defaultCategories = [
 export default function MenuManagement() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [specialImages, setSpecialImages] = useState<SpecialImage[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -122,7 +122,7 @@ export default function MenuManagement() {
     loadSpecialImages();
   }, [search, categoryFilter]);
 
-  // Image Upload for Menu Items
+  // Upload Image for Menu Item
   const uploadImage = async (file: File) => {
     setUploading(true);
     try {
@@ -142,7 +142,7 @@ export default function MenuManagement() {
     }
   };
 
-  // Special Image Upload
+  // Upload Special Image
   const uploadSpecialImage = async (file: File) => {
     setUploadingSpecial(true);
     try {
@@ -174,7 +174,6 @@ export default function MenuManagement() {
     loadSpecialImages();
   };
 
-  // Submit Menu Item
   const handleSubmit = async () => {
     if (!form.name?.trim() || !form.price) {
       alert("Item name and price are required");
@@ -266,14 +265,14 @@ export default function MenuManagement() {
     }
   };
 
-  if (loading) return <div className="p-6 text-white">Loading menu...</div>;
+  if (loading) return <div className="p-6 text-white">Loading menu items...</div>;
 
   return (
     <div className="p-6 text-white space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">Menu Management</h1>
-          <p className="text-zinc-400">Changes reflect on the public customer menu</p>
+          <p className="text-zinc-400 mt-1">Manage items shown on the public customer menu</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -340,17 +339,113 @@ export default function MenuManagement() {
         ))}
       </div>
 
-      {/* Add/Edit Form Modal */}
+      {/* Add/Edit Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 rounded-2xl w-full max-w-2xl p-8 max-h-[90vh] overflow-auto">
-            {/* Form content - same as previous enhanced version */}
-            {/* ... (I can expand this if needed, but keeping it concise for now) */}
             <h2 className="text-2xl font-bold mb-6">
               {editingItem ? "Edit Menu Item" : "Add New Menu Item"}
             </h2>
-            {/* Full form fields here - use previous enhanced form code */}
-            {/* For brevity, please use the enhanced form from my earlier response */}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <input
+                placeholder="Item Name *"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+              />
+              <input
+                placeholder="Price (ZAR) *"
+                type="number"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+              />
+            </div>
+
+            <input
+              placeholder="Cost Price (Optional)"
+              type="number"
+              value={form.cost_price}
+              onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
+              className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white mb-4"
+            />
+
+            <textarea
+              placeholder="Description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="w-full p-3 bg-zinc-800 rounded-xl h-24 border border-zinc-700 focus:border-white mb-4"
+            />
+
+            <div className="mb-4">
+              <label className="block text-sm text-zinc-400 mb-2">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+              >
+                {defaultCategories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* IMAGE UPLOAD SECTION - Prominent */}
+            <div className="mb-6">
+              <label className="block text-sm text-zinc-400 mb-2">Item Image (Optional)</label>
+              <div className="border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center hover:border-zinc-500 transition">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])}
+                  className="hidden"
+                  id="menu-image-upload"
+                />
+                <label htmlFor="menu-image-upload" className="cursor-pointer flex flex-col items-center">
+                  <Upload className="w-10 h-10 text-zinc-400 mb-2" />
+                  <span className="text-white font-medium">Click to upload image</span>
+                  <span className="text-zinc-500 text-sm mt-1">PNG, JPG, WebP recommended</span>
+                </label>
+              </div>
+              {uploading && <p className="text-amber-400 mt-2 text-center">Uploading image...</p>}
+              {form.image_url && (
+                <div className="mt-4">
+                  <p className="text-sm text-zinc-400 mb-2">Preview:</p>
+                  <img src={form.image_url} alt="Preview" className="w-48 h-48 object-cover rounded-xl border border-zinc-700" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-6 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} />
+                Featured Item
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
+                Published
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.show_on_public} onChange={(e) => setForm({ ...form, show_on_public: e.target.checked })} />
+                Show on Public Menu
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={handleSubmit}
+                className="flex-1 bg-white text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-200"
+              >
+                <Save size={18} /> {editingItem ? "Update Item" : "Create Item"}
+              </button>
+              <button
+                onClick={resetForm}
+                className="flex-1 py-3 border border-zinc-700 rounded-xl hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -372,10 +467,10 @@ export default function MenuManagement() {
                 onChange={(e) => e.target.files?.[0] && uploadSpecialImage(e.target.files[0])}
                 className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl"
               />
-              {uploadingSpecial && <p className="text-amber-400 mt-3">Uploading image...</p>}
+              {uploadingSpecial && <p className="text-amber-400 mt-3">Uploading...</p>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {specialImages.map((img) => (
                 <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-zinc-700">
                   <img src={img.image_url} className="w-full h-64 object-cover" />
