@@ -25,8 +25,6 @@ import Menu from "@/pages/public/Menu";
 import Gallery from "@/pages/public/PublicGallery";
 import Booking from "@/pages/public/Bookings";
 import Contact from "@/pages/public/Contact";
-import Register from "@/pages/public/Register";
-import Login from "@/pages/public/Login";
 
 // Admin Pages
 import Dashboard from "@/pages/admin/dashboard";
@@ -49,8 +47,6 @@ function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/booking" element={<Booking />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
       </Route>
 
       <Route element={<MemberLayout />}>
