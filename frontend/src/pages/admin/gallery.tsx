@@ -7,6 +7,7 @@ import {
   X,
   Image as ImageIcon,
   Loader2,
+  Edit3,
 } from "lucide-react";
 
 type GalleryImage = {
@@ -31,9 +32,11 @@ export default function AdminGallery() {
   const loadGallery = async () => {
     try {
       setLoading(true);
+      setError(null);
       const { data, error } = await supabase
         .from("gallery_images")
         .select("*")
+        .eq("is_active", true)
         .order("category")
         .order("sort_order");
 
@@ -79,7 +82,7 @@ export default function AdminGallery() {
 
       setDescription("");
       await loadGallery();
-      alert("Image uploaded successfully!");
+      alert("✅ Image uploaded successfully!");
     } catch (err: any) {
       alert("Upload failed: " + err.message);
     } finally {
@@ -103,19 +106,19 @@ export default function AdminGallery() {
     }
   };
 
-  const filteredImages = images.filter((img) => img.category === selectedCategory && img.is_active);
+  const filteredImages = images.filter((img) => img.category === selectedCategory);
 
   if (loading) {
     return (
-      <div className="p-6 text-white">
-        <Loader2 className="animate-spin inline-block mr-2" />
+      <div className="p-6 text-white flex items-center">
+        <Loader2 className="animate-spin mr-3" size={24} />
         Loading gallery...
       </div>
     );
   }
 
   return (
-    <div className="p-6 text-white space-y-6">
+    <div className="p-6 text-white space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">Gallery Management</h1>
@@ -147,16 +150,16 @@ export default function AdminGallery() {
         </button>
       </div>
 
-      {/* Upload Section - Prominent */}
+      {/* Upload Section */}
       <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8">
         <h3 className="text-xl font-semibold mb-6 flex items-center gap-3">
           <Upload size={24} /> Upload New Gallery Image
         </h3>
 
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <label className="block text-sm text-zinc-400 mb-2">Select Image</label>
-            <div className="border-2 border-dashed border-zinc-600 hover:border-zinc-500 rounded-2xl p-8 text-center transition">
+            <div className="border-2 border-dashed border-zinc-600 hover:border-amber-400 rounded-2xl p-10 text-center transition">
               <input
                 type="file"
                 accept="image/*"
@@ -165,9 +168,9 @@ export default function AdminGallery() {
                 id="gallery-upload"
               />
               <label htmlFor="gallery-upload" className="cursor-pointer flex flex-col items-center">
-                <ImageIcon className="w-12 h-12 text-zinc-400 mb-3" />
-                <span className="text-white font-medium">Click to upload image</span>
-                <span className="text-zinc-500 text-sm mt-1">PNG, JPG, WebP • Max 5MB recommended</span>
+                <ImageIcon className="w-16 h-16 text-zinc-400 mb-4" />
+                <span className="text-white font-medium text-lg">Click or drag image here</span>
+                <span className="text-zinc-500 text-sm mt-2">PNG, JPG, WebP • Recommended max 5MB</span>
               </label>
             </div>
           </div>
@@ -177,42 +180,60 @@ export default function AdminGallery() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Main dance floor area at night"
-              className="w-full h-32 p-4 bg-zinc-800 border border-zinc-700 rounded-2xl resize-y focus:border-white"
+              placeholder="e.g. Main dance floor with VIP seating"
+              className="w-full h-40 p-4 bg-zinc-800 border border-zinc-700 rounded-2xl resize-y focus:border-white focus:outline-none"
             />
           </div>
         </div>
-        {uploading && <p className="text-amber-400 mt-4 text-center">Uploading image... Please wait</p>}
+
+        {uploading && (
+          <div className="mt-4 flex items-center justify-center gap-3 text-amber-400">
+            <Loader2 className="animate-spin" size={20} />
+            Uploading image...
+          </div>
+        )}
       </div>
 
       {/* Current Images Grid */}
       <div>
-        <h3 className="text-xl font-semibold mb-4">
+        <h3 className="text-xl font-semibold mb-6">
           Current {selectedCategory === "venue" ? "Venue" : "Lifestyle"} Images ({filteredImages.length})
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredImages.length === 0 ? (
-            <div className="col-span-full text-center py-20 text-zinc-400">
-              No images uploaded in this category yet.
+            <div className="col-span-full text-center py-20 text-zinc-400 bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-700">
+              No images in this category yet. Upload some above.
             </div>
           ) : (
             filteredImages.map((img) => (
-              <div key={img.id} className="relative group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800">
+              <div
+                key={img.id}
+                className="relative group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-600 transition-all duration-200"
+              >
                 <img
                   src={img.image_url}
                   alt={img.description || "Gallery Image"}
                   className="w-full h-64 object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <p className="text-sm text-zinc-300 line-clamp-2">{img.description}</p>
+
+                {/* Description Overlay */}
+                {img.description && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
+                    <p className="text-sm text-zinc-300 line-clamp-2">{img.description}</p>
+                  </div>
+                )}
+
+                {/* Action Buttons - Now Always Visible with Hover Enhancement */}
+                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-90 group-hover:opacity-100 transition-all z-10">
+                  <button
+                    onClick={() => deleteImage(img.id)}
+                    className="bg-red-600 hover:bg-red-700 p-3 rounded-full text-white shadow-lg transition-all active:scale-95"
+                    title="Delete Image"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => deleteImage(img.id)}
-                  className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                >
-                  <Trash2 size={18} />
-                </button>
               </div>
             ))
           )}

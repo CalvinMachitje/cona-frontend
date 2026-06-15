@@ -47,7 +47,7 @@ const defaultCategories = [
 export default function MenuManagement() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [specialImages, setSpecialImages] = useState<SpecialImage[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<string[]>(defaultCategories);
+  const [availableCategories] = useState(defaultCategories);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +59,6 @@ export default function MenuManagement() {
   const [uploading, setUploading] = useState(false);
   const [uploadingSpecial, setUploadingSpecial] = useState(false);
 
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showSpecialsModal, setShowSpecialsModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
 
@@ -79,7 +78,6 @@ export default function MenuManagement() {
   // Load Data
   const loadMenu = async () => {
     setLoading(true);
-    setError(null);
     try {
       const { data, error } = await supabase.functions.invoke("manage-menu", {
         body: {
@@ -111,22 +109,18 @@ export default function MenuManagement() {
     loadSpecialImages();
   }, [search, categoryFilter]);
 
-  // Upload Image for Menu Item
+  // Image Uploads
   const uploadImage = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
-      return;
-    }
+    if (!file.type.startsWith("image/")) return alert("Please upload a valid image");
     setUploading(true);
     try {
       const fileName = `${Date.now()}-${file.name}`;
       const { error } = await supabase.storage.from("menu-images").upload(fileName, file, { upsert: true });
       if (error) throw error;
-
       const { data } = supabase.storage.from("menu-images").getPublicUrl(fileName);
       setForm(prev => ({ ...prev, image_url: data.publicUrl }));
     } catch (err: any) {
-      alert("Image upload failed: " + err.message);
+      alert("Upload failed: " + err.message);
     } finally {
       setUploading(false);
     }
@@ -134,36 +128,27 @@ export default function MenuManagement() {
 
   const removeImage = () => setForm(prev => ({ ...prev, image_url: "" }));
 
-  // Upload Multiple Special Images
   const uploadMultipleSpecialImages = async (files: FileList) => {
-    if (files.length === 0) return;
     setUploadingSpecial(true);
-    let success = 0;
-
+    let count = 0;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file.type.startsWith("image/")) continue;
-
       try {
         const fileName = `special-${Date.now()}-${i}-${file.name}`;
         const { error } = await supabase.storage.from("menu-images").upload(fileName, file, { upsert: true });
         if (error) continue;
-
         const { data } = supabase.storage.from("menu-images").getPublicUrl(fileName);
-
         await supabase.from("special_images").insert({
           image_url: data.publicUrl,
-          sort_order: specialImages.length + success + 1,
+          sort_order: specialImages.length + count + 1,
         });
-        success++;
-      } catch (e) {
-        console.error(e);
-      }
+        count++;
+      } catch (e) {}
     }
-
     await loadSpecialImages();
     setUploadingSpecial(false);
-    if (success > 0) alert(`${success} image(s) uploaded successfully!`);
+    if (count > 0) alert(`${count} special image(s) uploaded successfully!`);
   };
 
   const deleteSpecialImage = async (id: string) => {
@@ -172,15 +157,20 @@ export default function MenuManagement() {
     await loadSpecialImages();
   };
 
+  // Improved handleSubmit
   const handleSubmit = async () => {
-    if (!form.name?.trim() || !form.price) {
-      alert("Item name and price are required");
+    if (!form.name.trim()) {
+      alert("Item name is required");
+      return;
+    }
+    if (!form.price || Number(form.price) <= 0) {
+      alert("Valid price is required");
       return;
     }
 
     const payload = {
       name: form.name.trim(),
-      description: form.description?.trim() || null,
+      description: form.description.trim() || null,
       price: Number(form.price),
       cost_price: Number(form.cost_price || 0),
       image_url: form.image_url || null,
@@ -188,21 +178,25 @@ export default function MenuManagement() {
       is_featured: form.is_featured,
       is_published: form.is_published,
       show_on_public: form.show_on_public,
-      sort_order: Number(form.sort_order),
+      sort_order: Number(form.sort_order || 0),
     };
 
     const action = editingItem ? "update" : "create";
-    const body = editingItem ? { action, item: { ...payload, id: editingItem.id } } : { action, item: payload };
+    const body = editingItem
+      ? { action, item: { ...payload, id: editingItem.id } }
+      : { action, item: payload };
 
     try {
-      const { error } = await supabase.functions.invoke("manage-menu", { body });
+      const { data, error } = await supabase.functions.invoke("manage-menu", { body });
       if (error) throw error;
+      if (data?.success === false) throw new Error(data.error || "Operation failed");
 
-      alert(editingItem ? "Menu item updated successfully!" : "Menu item created successfully!");
       await loadMenu();
+      alert(editingItem ? "Menu item updated successfully!" : "Menu item created successfully!");
       resetForm();
     } catch (err: any) {
-      alert("Error saving item: " + err.message);
+      console.error(err);
+      alert(err.message || "Failed to save menu item");
     }
   };
 
@@ -250,47 +244,45 @@ export default function MenuManagement() {
       });
       await loadMenu();
     } catch (err: any) {
-      alert("Failed to update: " + err.message);
+      alert("Failed to update publish status");
     }
   };
 
-  const addNewCategory = () => {
-    if (!newCategory.trim() || availableCategories.includes(newCategory.trim())) return;
-    const updated = [...availableCategories, newCategory.trim()].sort();
-    setAvailableCategories(updated);
-    setNewCategory("");
-    setShowCategoryModal(false);
-  };
+  // Loading Screen
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-zinc-700 border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Loading menu items...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (loading) return <div className="p-6 text-white">Loading menu management...</div>;
-  if (error) return <div className="p-6 text-red-400">Error: {error}</div>;
+  if (error) return <div className="p-10 text-red-400">Error: {error}</div>;
 
   return (
-    <div className="p-6 text-white space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-8">
+      {/* Header - Highly Visible Buttons */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
         <div>
           <h1 className="text-4xl font-bold">Menu Management</h1>
-          <p className="text-zinc-400 mt-1">Manage items, pricing, images &amp; special deals</p>
+          <p className="text-zinc-400">Add, edit, remove items and manage special deals</p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowCategoryModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 border border-zinc-400 text-zinc-400 rounded-xl hover:bg-zinc-800"
-          >
-            <Settings size={18} /> Categories
-          </button>
+
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setShowSpecialsModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 border border-amber-400 text-amber-400 rounded-xl hover:bg-amber-400/10"
+            className="flex items-center gap-2 px-6 py-3 border border-amber-400 text-amber-400 rounded-2xl hover:bg-amber-400/10 transition"
           >
-            <ImageIcon size={18} /> Special Deals
+            <ImageIcon size={20} /> Special Deals
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl font-medium hover:bg-gray-200"
+            className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl font-semibold hover:bg-gray-100 transition"
           >
-            <Plus size={20} /> Add New Item
+            <Plus size={22} /> Add New Item
           </button>
         </div>
       </div>
@@ -304,15 +296,15 @@ export default function MenuManagement() {
             placeholder="Search menu items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 pl-11 py-3 rounded-xl focus:border-white"
+            className="w-full bg-zinc-900 border border-zinc-700 pl-11 py-3 rounded-2xl focus:border-white"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 px-5 py-3 rounded-xl focus:border-white"
+          className="bg-zinc-900 border border-zinc-700 px-6 py-3 rounded-2xl focus:border-white"
         >
-          {["All", ...availableCategories].map((cat) => (
+          {["All", ...defaultCategories].map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
@@ -320,162 +312,138 @@ export default function MenuManagement() {
 
       {/* Menu Items Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <div key={item.id} className="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition">
-            {item.image_url && <img src={item.image_url} alt={item.name} className="w-full h-48 object-cover" />}
-            <div className="p-5">
-              <div className="flex justify-between">
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <span className="text-amber-400 font-medium">R{item.price}</span>
-              </div>
-              <p className="text-sm text-zinc-400 mt-1">{item.category}</p>
+        {items.length === 0 ? (
+          <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-3xl p-12 text-center">
+            <h3 className="text-2xl font-semibold mb-3">No Menu Items Found</h3>
+            <p className="text-zinc-400 mb-6">Get started by adding your first menu item.</p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-white text-black px-8 py-3 rounded-2xl font-semibold hover:bg-gray-100"
+            >
+              Add First Menu Item
+            </button>
+          </div>
+        ) : (
+          items.map((item) => (
+            <div key={item.id} className="bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 hover:border-zinc-600 transition-all">
+              {item.image_url?.trim() && (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="w-full h-52 object-cover"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              )}
+              <div className="p-6">
+                <div className="flex justify-between">
+                  <h3 className="font-semibold text-lg">{item.name}</h3>
+                  <span className="text-amber-400 font-medium">R{item.price}</span>
+                </div>
+                <p className="text-sm text-zinc-400 mt-1">{item.category}</p>
 
-              <div className="flex gap-2 mt-6">
-                <button onClick={() => handleEdit(item)} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl flex items-center justify-center gap-2">
-                  <Edit3 size={16} /> Edit
-                </button>
-                <button onClick={() => togglePublish(item)} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl">
-                  {item.is_published ? <Eye size={18} className="mx-auto" /> : <EyeOff size={18} className="mx-auto" />}
-                </button>
-                <button onClick={() => handleDelete(item.id)} className="flex-1 py-2.5 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl">
-                  <Trash2 size={18} className="mx-auto" />
-                </button>
+                <div className="grid grid-cols-3 gap-3 mt-8">
+                  <button onClick={() => handleEdit(item)} className="py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
+                    <Edit3 size={18} /> Edit
+                  </button>
+                  <button onClick={() => togglePublish(item)} className="py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">
+                    {item.is_published ? <Eye size={20} className="mx-auto" /> : <EyeOff size={20} className="mx-auto" />}
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} className="py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-2xl">
+                    <Trash2 size={20} className="mx-auto" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* Add / Edit Form */}
+      {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 rounded-2xl w-full max-w-2xl p-8 max-h-[90vh] overflow-auto">
-            <h2 className="text-2xl font-bold mb-6">
-              {editingItem ? "Edit Menu Item" : "Add New Menu Item"}
-            </h2>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-zinc-900 rounded-3xl w-full max-w-2xl p-8 max-h-[92vh] overflow-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">
+                {editingItem ? "Edit Menu Item" : "Add New Menu Item"}
+              </h2>
+              <button onClick={resetForm} className="p-2 hover:bg-zinc-800 rounded-xl">
+                <X size={28} />
+              </button>
+            </div>
 
-            {/* Form fields - same as before */}
             <div className="space-y-6">
-              {/* Name & Price */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-1">Item Name *</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white" placeholder="Item name" />
+                  <label className="block text-sm text-zinc-400 mb-2">Item Name *</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full p-4 bg-zinc-800 rounded-2xl border border-zinc-700" placeholder="Item name" />
                 </div>
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-1">Price (ZAR) *</label>
-                  <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white" />
+                  <label className="block text-sm text-zinc-400 mb-2">Price (ZAR) *</label>
+                  <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full p-4 bg-zinc-800 rounded-2xl border border-zinc-700" />
                 </div>
               </div>
 
-              {/* Cost Price & Description */}
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">Cost Price (Optional)</label>
-                <input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white" />
-              </div>
-
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Description</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full p-3 bg-zinc-800 rounded-xl h-24 border border-zinc-700 focus:border-white" placeholder="Description..." />
-              </div>
-
-              {/* Category & Image Upload */}
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Category</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white">
-                  {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
+                <label className="block text-sm text-zinc-400 mb-2">Description</label>
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full p-4 bg-zinc-800 rounded-2xl h-28 border border-zinc-700" />
               </div>
 
               <div>
                 <label className="block text-sm text-zinc-400 mb-2">Item Image</label>
-                <div className="border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center hover:border-zinc-500 transition">
+                <div className="border-2 border-dashed border-zinc-700 rounded-3xl p-8 text-center">
                   <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} className="hidden" id="menu-image-upload" />
                   <label htmlFor="menu-image-upload" className="cursor-pointer flex flex-col items-center">
-                    <Upload className="w-10 h-10 text-zinc-400 mb-2" />
-                    <span className="text-white font-medium">Upload Image</span>
+                    <Upload className="w-12 h-12 text-zinc-400 mb-3" />
+                    <span className="font-medium">Upload Image</span>
                   </label>
                 </div>
-                {uploading && <p className="text-amber-400 mt-2">Uploading...</p>}
                 {form.image_url && (
                   <div className="mt-4 flex items-center gap-4">
-                    <img src={form.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-xl border border-zinc-700" />
-                    <button onClick={removeImage} className="text-red-400 hover:text-red-500 flex items-center gap-1 text-sm">
-                      <Trash2 size={16} /> Remove Image
-                    </button>
+                    <img src={form.image_url} alt="Preview" className="w-40 h-40 object-cover rounded-2xl" />
+                    <button onClick={removeImage} className="text-red-400">Remove</button>
                   </div>
                 )}
               </div>
 
-              {/* Checkboxes & Sort Order */}
-              <div className="flex flex-wrap gap-6">
-                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} /> Featured</label>
-                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} /> Published</label>
-                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.show_on_public} onChange={(e) => setForm({ ...form, show_on_public: e.target.checked })} /> Show on Public Menu</label>
+              <div className="flex gap-4 pt-6">
+                <button onClick={handleSubmit} className="flex-1 bg-white text-black py-4 rounded-2xl font-semibold text-lg">
+                  <Save className="inline mr-2" size={20} />
+                  {editingItem ? "Update Item" : "Create Item"}
+                </button>
+                <button onClick={resetForm} className="flex-1 py-4 border border-zinc-700 rounded-2xl text-lg">Cancel</button>
               </div>
-
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Sort Order</label>
-                <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white" />
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-8">
-              <button onClick={handleSubmit} className="flex-1 bg-white text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-200">
-                <Save size={18} /> {editingItem ? "Update Item" : "Create Item"}
-              </button>
-              <button onClick={resetForm} className="flex-1 py-3 border border-zinc-700 rounded-xl hover:bg-zinc-800">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Special Deals Modal - Multiple Upload */}
+      {/* Special Deals Modal */}
       {showSpecialsModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 rounded-2xl w-full max-w-5xl p-8 max-h-[90vh] overflow-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Manage Special Deals Images</h2>
-              <button onClick={() => setShowSpecialsModal(false)}><X size={24} /></button>
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+          <div className="bg-zinc-900 rounded-3xl w-full max-w-6xl p-8 max-h-[92vh] overflow-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">Special Deals Images</h2>
+              <button onClick={() => setShowSpecialsModal(false)}><X size={28} /></button>
             </div>
 
-            <div className="mb-8 border-2 border-dashed border-amber-400 rounded-2xl p-10 text-center hover:border-amber-500 transition">
-              <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && uploadMultipleSpecialImages(e.target.files)} className="hidden" id="special-upload" />
-              <label htmlFor="special-upload" className="cursor-pointer flex flex-col items-center">
-                <Upload className="w-14 h-14 text-amber-400 mb-4" />
-                <span className="text-lg font-medium">Upload Multiple Special Images</span>
-                <span className="text-zinc-500">Click or select multiple files</span>
+            <div className="border-2 border-dashed border-amber-400 rounded-3xl p-12 text-center mb-10">
+              <input type="file" multiple accept="image/*" onChange={(e) => e.target.files && uploadMultipleSpecialImages(e.target.files)} className="hidden" id="special-upload" />
+              <label htmlFor="special-upload" className="cursor-pointer">
+                <Upload className="mx-auto w-16 h-16 text-amber-400 mb-4" />
+                <p className="text-xl">Upload Multiple Special Images</p>
               </label>
-              {uploadingSpecial && <p className="text-amber-400 mt-4">Uploading...</p>}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {specialImages.map((img) => (
-                <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-zinc-700">
-                  <img src={img.image_url} className="w-full h-64 object-cover" alt="Special" />
-                  <button onClick={() => deleteSpecialImage(img.id)} className="absolute top-3 right-3 bg-red-600 p-2 rounded-full opacity-0 group-hover:opacity-100 transition">
-                    <Trash2 size={18} />
+                <div key={img.id} className="relative group rounded-3xl overflow-hidden border border-zinc-700">
+                  <img src={img.image_url} className="w-full aspect-square object-cover" />
+                  <button onClick={() => deleteSpecialImage(img.id)} className="absolute top-4 right-4 bg-red-600 p-2 rounded-full opacity-0 group-hover:opacity-100">
+                    <Trash2 size={20} />
                   </button>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Category Modal */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 rounded-2xl w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold mb-6">Manage Categories</h2>
-            <div className="flex gap-2 mb-6">
-              <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category" className="flex-1 p-3 bg-zinc-800 rounded-xl border border-zinc-700" />
-              <button onClick={addNewCategory} className="px-6 bg-white text-black rounded-xl">Add</button>
-            </div>
-            <ul className="space-y-2 max-h-60 overflow-auto">
-              {availableCategories.map((cat, i) => <li key={i} className="bg-zinc-800 px-4 py-2 rounded-xl">{cat}</li>)}
-            </ul>
-            <button onClick={() => setShowCategoryModal(false)} className="mt-6 w-full py-3 border border-zinc-700 rounded-xl">Close</button>
           </div>
         </div>
       )}

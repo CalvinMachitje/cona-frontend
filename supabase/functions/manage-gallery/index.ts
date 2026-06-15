@@ -18,93 +18,137 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const { action, image_url, category, description, id, sort_order } = body;
 
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
+    // =========================
     // GET ALL GALLERY IMAGES
+    // =========================
     if (action === "get") {
       const { data, error } = await supabase
         .from("gallery_images")
         .select("*")
+        .eq("is_active", true)
         .order("category")
-        .order("sort_order");
+        .order("sort_order", { ascending: true });
 
       if (error) throw error;
 
-      return new Response(
-        JSON.stringify({ success: true, data: data ?? [] }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return Response.json(
+        { success: true, data: data ?? [] },
+        { headers: corsHeaders }
       );
     }
 
-    // CREATE / UPLOAD NEW IMAGE
+    // =========================
+    // CREATE NEW GALLERY IMAGE
+    // =========================
     if (action === "create") {
       if (!image_url || !category) {
         throw new Error("image_url and category are required");
       }
 
+      const payload = {
+        image_url,
+        category,
+        description: description?.trim() || null,
+        sort_order: Number(sort_order ?? 0),
+        is_active: true,
+      };
+
       const { data, error } = await supabase
         .from("gallery_images")
-        .insert({
-          image_url,
-          category,
-          description: description || null,
-          sort_order: sort_order || 0,
-        })
+        .insert(payload)
         .select()
         .single();
 
       if (error) throw error;
 
-      return new Response(
-        JSON.stringify({ success: true, data }),
-        { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return Response.json(
+        { 
+          success: true, 
+          data,
+          message: "Gallery image created successfully" 
+        },
+        { 
+          status: 201, 
+          headers: corsHeaders 
+        }
       );
     }
 
+    // =========================
     // UPDATE IMAGE
+    // =========================
     if (action === "update") {
-      if (!id) throw new Error("ID is required");
+      if (!id) throw new Error("Image ID is required for update");
+
+      const updatePayload: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (description !== undefined) updatePayload.description = description?.trim() || null;
+      if (sort_order !== undefined) updatePayload.sort_order = Number(sort_order);
+
+      const { data, error } = await supabase
+        .from("gallery_images")
+        .update(updatePayload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return Response.json(
+        { 
+          success: true, 
+          data,
+          message: "Gallery image updated successfully" 
+        },
+        { headers: corsHeaders }
+      );
+    }
+
+    // =========================
+    // SOFT DELETE
+    // =========================
+    if (action === "delete") {
+      if (!id) throw new Error("Image ID is required");
 
       const { error } = await supabase
         .from("gallery_images")
-        .update({
-          description,
-          sort_order,
-          updated_at: new Date().toISOString(),
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString() 
         })
         .eq("id", id);
 
       if (error) throw error;
 
-      return new Response(
-        JSON.stringify({ success: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return Response.json(
+        { 
+          success: true, 
+          message: "Gallery image deleted successfully" 
+        },
+        { headers: corsHeaders }
       );
     }
 
-    // SOFT DELETE
-    if (action === "delete") {
-      if (!id) throw new Error("ID is required");
-
-      const { error } = await supabase
-        .from("gallery_images")
-        .update({ is_active: false })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    throw new Error("Invalid action");
+    throw new Error("Invalid action specified");
   } catch (err: any) {
     console.error("GALLERY FUNCTION ERROR:", err);
+
     return new Response(
-      JSON.stringify({ success: false, error: err.message }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: err.message || "Internal server error",
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
