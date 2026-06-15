@@ -109,13 +109,6 @@ export function Footer() {
               refiloeitsolutions.co.za
             </a>
           </p>
-
-          <Link
-            to="/contact"
-            className="uppercase tracking-[0.2em] hover:text-primary"
-          >
-            Contact Us
-          </Link>
         </div>
       </div>
     </footer>
