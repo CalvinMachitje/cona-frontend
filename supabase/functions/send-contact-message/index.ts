@@ -26,7 +26,7 @@ Deno.serve(async (req: Request) => {
       throw new Error("Missing required fields");
     }
 
-    // reCAPTCHA
+    // reCAPTCHA verification
     const captchaRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -49,16 +49,18 @@ Deno.serve(async (req: Request) => {
 
     if (error) throw error;
 
-    // Admin Notification
+    // Admin Notification (from Info email)
     await sendEmail({
-      to: "smachitje36@gmail.com",
+      from: `Cona Lounge <${env.INFO_EMAIL}>`,
+      to: env.INFO_EMAIL,
       subject: `New Contact Inquiry: ${subject}`,
       html: contactAdminNotificationHtml({ name, email, subject, message }),
       text: `New contact from ${name} (${email})\nSubject: ${subject}\n\n${message}`,
     });
 
-    // Customer Auto-Reply
+    // Customer Auto-Reply (from Bookings email)
     await sendEmail({
+      from: `Bookings <${env.BOOKINGS_EMAIL}>`,
       to: email,
       subject: "Thank You - We've Received Your Message | CONA Lounge",
       html: contactCustomerReplyHtml(name),

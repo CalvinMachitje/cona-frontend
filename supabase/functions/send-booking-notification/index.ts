@@ -18,7 +18,6 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { booking_id } = await req.json();
-
     if (!booking_id) throw new Error("booking_id is required");
 
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
@@ -41,6 +40,7 @@ Deno.serve(async (req: Request) => {
     const text = bookingConfirmationText(booking, table);
 
     await sendEmail({
+      from: `Bookings <${env.BOOKINGS_EMAIL}>`,
       to: booking.guest_email,
       subject,
       html,

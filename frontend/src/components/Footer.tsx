@@ -99,7 +99,15 @@ export function Footer() {
       <div className="border-t border-border/40">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground text-center sm:text-left">
           <p>
-            © {new Date().getFullYear()} CONA Lounge. All rights reserved.
+            © {new Date().getFullYear()} CONA Lounge. All rights reserved. Developed by{" "}
+            <a
+              href="https://refiloeitsolutions.co.za"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-primary transition-colors"
+            >
+              refiloeitsolutions.co.za
+            </a>
           </p>
 
           <Link

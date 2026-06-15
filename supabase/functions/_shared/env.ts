@@ -1,5 +1,4 @@
 // supabase/functions/_shared/env.ts
-
 type RequiredEnv =
   | "SUPABASE_URL"
   | "SUPABASE_SERVICE_ROLE_KEY"
@@ -28,6 +27,8 @@ export const env = {
 
   // Application
   APP_ENV: getEnv("APP_ENV"),
+
+  // Default Sender (used as fallback)
   FROM_EMAIL: getEnv("FROM_EMAIL"),
   FROM_NAME: getEnv("FROM_NAME"),
 
@@ -42,6 +43,10 @@ export const env = {
 
   // Optional
   APP_URL: getOptionalEnv("APP_URL"),
+
+  // Professional Senders (Cona Lounge specific)
+  BOOKINGS_EMAIL: getOptionalEnv("BOOKINGS_EMAIL") || "bookings@conalounge.co.za",
+  INFO_EMAIL: getOptionalEnv("INFO_EMAIL") || "info@conalounge.co.za",
 } as const;
 
 export type Env = typeof env;

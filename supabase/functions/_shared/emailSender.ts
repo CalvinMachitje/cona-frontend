@@ -14,26 +14,30 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendEmail({
+  from,           // Optional: override sender
   to,
   subject,
   html,
   text,
 }: {
+  from?: string;  // e.g. "Bookings <bookings@conalounge.co.za>"
   to: string | string[];
   subject: string;
   html?: string;
   text?: string;
 }) {
   try {
+    const sender = from || `${env.FROM_NAME} <${env.FROM_EMAIL}>`;
+
     const info = await transporter.sendMail({
-      from: `${env.FROM_NAME} <${env.FROM_EMAIL}>`,
+      from: sender,
       to,
       subject,
       html,
       text: text || html?.replace(/<[^>]+>/g, ""),
     });
 
-    console.log(`Email sent: ${info.messageId}`);
+    console.log(`Email sent: ${info.messageId} | From: ${sender}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("SMTP Error:", error);
