@@ -12,6 +12,7 @@ import {
   Save,
   Upload,
   Image as ImageIcon,
+  Edit3,
 } from "lucide-react";
 
 type MenuItem = {
@@ -57,6 +58,7 @@ const defaultCategories = [
 export default function MenuManagement() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [specialImages, setSpecialImages] = useState<SpecialImage[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>(defaultCategories);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +104,7 @@ export default function MenuManagement() {
       setItems(data?.data ?? []);
     } catch (err: any) {
       setError(err.message || "Failed to load menu items");
+      console.error("Menu load error:", err);
     } finally {
       setLoading(false);
     }
@@ -117,13 +120,24 @@ export default function MenuManagement() {
     setSpecialImages(data || []);
   };
 
+  // Load Categories (future-proof for dynamic categories)
+  const loadCategories = async () => {
+    // For now using defaults; extend with DB table if needed
+    setAvailableCategories(defaultCategories);
+  };
+
   useEffect(() => {
     loadMenu();
     loadSpecialImages();
+    loadCategories();
   }, [search, categoryFilter]);
 
   // Upload Image for Menu Item
   const uploadImage = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
     setUploading(true);
     try {
       const fileName = `${Date.now()}-${file.name}`;
@@ -142,8 +156,16 @@ export default function MenuManagement() {
     }
   };
 
+  const removeImage = () => {
+    setForm((prev) => ({ ...prev, image_url: "" }));
+  };
+
   // Upload Special Image
   const uploadSpecialImage = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
     setUploadingSpecial(true);
     try {
       const fileName = `special-${Date.now()}-${file.name}`;
@@ -160,7 +182,7 @@ export default function MenuManagement() {
         sort_order: specialImages.length + 1,
       });
 
-      loadSpecialImages();
+      await loadSpecialImages();
     } catch (err: any) {
       alert("Failed to upload special image: " + err.message);
     } finally {
@@ -171,7 +193,7 @@ export default function MenuManagement() {
   const deleteSpecialImage = async (id: string) => {
     if (!confirm("Delete this special combo image?")) return;
     await supabase.from("special_images").update({ is_active: false }).eq("id", id);
-    loadSpecialImages();
+    await loadSpecialImages();
   };
 
   const handleSubmit = async () => {
@@ -202,8 +224,8 @@ export default function MenuManagement() {
       const { error } = await supabase.functions.invoke("manage-menu", { body });
       if (error) throw error;
 
-      alert(editingItem ? "Menu item updated successfully!" : "Menu item created successfully!");
-      loadMenu();
+      alert(editingItem ? "✅ Menu item updated successfully!" : "✅ Menu item created successfully!");
+      await loadMenu();
       resetForm();
     } catch (err: any) {
       alert("Error saving item: " + err.message);
@@ -245,10 +267,10 @@ export default function MenuManagement() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this menu item?")) return;
+    if (!confirm("Delete this menu item permanently?")) return;
     try {
       await supabase.functions.invoke("manage-menu", { body: { action: "delete", id } });
-      loadMenu();
+      await loadMenu();
     } catch (err: any) {
       alert("Delete failed: " + err.message);
     }
@@ -259,22 +281,39 @@ export default function MenuManagement() {
       await supabase.functions.invoke("manage-menu", {
         body: { action: "update", item: { ...item, is_published: !item.is_published } },
       });
-      loadMenu();
+      await loadMenu();
     } catch (err: any) {
       alert("Failed to update: " + err.message);
     }
   };
 
-  if (loading) return <div className="p-6 text-white">Loading menu items...</div>;
+  const addNewCategory = () => {
+    if (!newCategory.trim() || availableCategories.includes(newCategory.trim())) return;
+    const updated = [...availableCategories, newCategory.trim()].sort();
+    setAvailableCategories(updated);
+    setNewCategory("");
+    setShowCategoryModal(false);
+    // Optionally persist to DB in future
+  };
+
+  if (loading) return <div className="p-6 text-white">Loading menu management...</div>;
+  if (error) return <div className="p-6 text-red-400">Error: {error}</div>;
 
   return (
     <div className="p-6 text-white space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">Menu Management</h1>
-          <p className="text-zinc-400 mt-1">Manage items shown on the public customer menu</p>
+          <p className="text-zinc-400 mt-1">Manage Cona Lounge menu items and visuals</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 border border-zinc-400 text-zinc-400 rounded-xl hover:bg-zinc-800"
+          >
+            <Settings size={18} />
+            Categories
+          </button>
           <button
             onClick={() => setShowSpecialsModal(true)}
             className="flex items-center gap-2 px-5 py-2.5 border border-amber-400 text-amber-400 rounded-xl hover:bg-amber-400/10"
@@ -309,7 +348,7 @@ export default function MenuManagement() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="bg-zinc-900 border border-zinc-700 px-5 py-3 rounded-xl focus:border-white"
         >
-          {["All", ...defaultCategories].map((cat) => (
+          {["All", ...availableCategories].map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
@@ -318,19 +357,34 @@ export default function MenuManagement() {
       {/* Menu Items Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => (
-          <div key={item.id} className="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800">
-            {item.image_url && <img src={item.image_url} className="w-full h-48 object-cover" />}
+          <div key={item.id} className="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition">
+            {item.image_url && (
+              <img src={item.image_url} alt={item.name} className="w-full h-48 object-cover" />
+            )}
             <div className="p-5">
-              <h3 className="font-semibold text-lg">{item.name}</h3>
-              <p className="text-sm text-zinc-400">
-                {item.category} • R{item.price}
-              </p>
+              <div className="flex justify-between">
+                <h3 className="font-semibold text-lg">{item.name}</h3>
+                <span className="text-amber-400 font-medium">R{item.price}</span>
+              </div>
+              <p className="text-sm text-zinc-400 mt-1">{item.category}</p>
+
               <div className="flex gap-2 mt-6">
-                <button onClick={() => handleEdit(item)} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl">Edit</button>
-                <button onClick={() => togglePublish(item)} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl">
+                <button
+                  onClick={() => handleEdit(item)}
+                  className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl flex items-center justify-center gap-2"
+                >
+                  <Edit3 size={16} /> Edit
+                </button>
+                <button
+                  onClick={() => togglePublish(item)}
+                  className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl"
+                >
                   {item.is_published ? <Eye size={18} className="mx-auto" /> : <EyeOff size={18} className="mx-auto" />}
                 </button>
-                <button onClick={() => handleDelete(item.id)} className="flex-1 py-2.5 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl">
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  className="flex-1 py-2.5 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl"
+                >
                   <Trash2 size={18} className="mx-auto" />
                 </button>
               </div>
@@ -339,7 +393,7 @@ export default function MenuManagement() {
         ))}
       </div>
 
-      {/* Add/Edit Form */}
+      {/* Add/Edit Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 rounded-2xl w-full max-w-2xl p-8 max-h-[90vh] overflow-auto">
@@ -347,92 +401,120 @@ export default function MenuManagement() {
               {editingItem ? "Edit Menu Item" : "Add New Menu Item"}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <input
-                placeholder="Item Name *"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
-              />
-              <input
-                placeholder="Price (ZAR) *"
-                type="number"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
-              />
-            </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">Item Name *</label>
+                  <input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+                    placeholder="e.g. Signature Margarita"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">Price (ZAR) *</label>
+                  <input
+                    type="number"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                    className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+                  />
+                </div>
+              </div>
 
-            <input
-              placeholder="Cost Price (Optional)"
-              type="number"
-              value={form.cost_price}
-              onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
-              className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white mb-4"
-            />
-
-            <textarea
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full p-3 bg-zinc-800 rounded-xl h-24 border border-zinc-700 focus:border-white mb-4"
-            />
-
-            <div className="mb-4">
-              <label className="block text-sm text-zinc-400 mb-2">Category</label>
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
-              >
-                {defaultCategories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* IMAGE UPLOAD SECTION - Prominent */}
-            <div className="mb-6">
-              <label className="block text-sm text-zinc-400 mb-2">Item Image (Optional)</label>
-              <div className="border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center hover:border-zinc-500 transition">
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">Cost Price (Optional)</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])}
-                  className="hidden"
-                  id="menu-image-upload"
+                  type="number"
+                  value={form.cost_price}
+                  onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
+                  className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
                 />
-                <label htmlFor="menu-image-upload" className="cursor-pointer flex flex-col items-center">
-                  <Upload className="w-10 h-10 text-zinc-400 mb-2" />
-                  <span className="text-white font-medium">Click to upload image</span>
-                  <span className="text-zinc-500 text-sm mt-1">PNG, JPG, WebP recommended</span>
+              </div>
+
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full p-3 bg-zinc-800 rounded-xl h-24 border border-zinc-700 focus:border-white"
+                  placeholder="Short description..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">Category</label>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+                >
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm text-zinc-400 mb-2">Item Image</label>
+                <div className="border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center hover:border-zinc-500 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])}
+                    className="hidden"
+                    id="menu-image-upload"
+                  />
+                  <label htmlFor="menu-image-upload" className="cursor-pointer flex flex-col items-center">
+                    <Upload className="w-10 h-10 text-zinc-400 mb-2" />
+                    <span className="text-white font-medium">Upload Image</span>
+                  </label>
+                </div>
+
+                {uploading && <p className="text-amber-400 mt-2">Uploading...</p>}
+
+                {form.image_url && (
+                  <div className="mt-4 flex items-center gap-4">
+                    <img src={form.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-xl border border-zinc-700" />
+                    <button
+                      onClick={removeImage}
+                      className="text-red-400 hover:text-red-500 flex items-center gap-1 text-sm"
+                    >
+                      <Trash2 size={16} /> Remove Image
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} />
+                  Featured
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
+                  Published
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.show_on_public} onChange={(e) => setForm({ ...form, show_on_public: e.target.checked })} />
+                  Show on Public Menu
                 </label>
               </div>
-              {uploading && <p className="text-amber-400 mt-2 text-center">Uploading image...</p>}
-              {form.image_url && (
-                <div className="mt-4">
-                  <p className="text-sm text-zinc-400 mb-2">Preview:</p>
-                  <img src={form.image_url} alt="Preview" className="w-48 h-48 object-cover rounded-xl border border-zinc-700" />
-                </div>
-              )}
+
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">Sort Order</label>
+                <input
+                  type="number"
+                  value={form.sort_order}
+                  onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
+                  className="w-full p-3 bg-zinc-800 rounded-xl border border-zinc-700 focus:border-white"
+                />
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-6 mb-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} />
-                Featured Item
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-                Published
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.show_on_public} onChange={(e) => setForm({ ...form, show_on_public: e.target.checked })} />
-                Show on Public Menu
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-8">
               <button
                 onClick={handleSubmit}
                 className="flex-1 bg-white text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-200"
@@ -446,6 +528,35 @@ export default function MenuManagement() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Management Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 rounded-2xl w-full max-w-md p-8">
+            <h2 className="text-2xl font-bold mb-6">Manage Categories</h2>
+            <div className="flex gap-2 mb-6">
+              <input
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="New category name"
+                className="flex-1 p-3 bg-zinc-800 rounded-xl border border-zinc-700"
+              />
+              <button onClick={addNewCategory} className="px-6 bg-white text-black rounded-xl">Add</button>
+            </div>
+            <div className="text-sm text-zinc-400 mb-2">Current Categories:</div>
+            <ul className="space-y-2 max-h-60 overflow-auto">
+              {availableCategories.map((cat, idx) => (
+                <li key={idx} className="bg-zinc-800 px-4 py-2 rounded-xl flex justify-between items-center">
+                  {cat}
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => setShowCategoryModal(false)} className="mt-6 w-full py-3 border border-zinc-700 rounded-xl">
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -473,7 +584,7 @@ export default function MenuManagement() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {specialImages.map((img) => (
                 <div key={img.id} className="relative group rounded-2xl overflow-hidden border border-zinc-700">
-                  <img src={img.image_url} className="w-full h-64 object-cover" />
+                  <img src={img.image_url} className="w-full h-64 object-cover" alt="Special" />
                   <button
                     onClick={() => deleteSpecialImage(img.id)}
                     className="absolute top-3 right-3 bg-red-600 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"

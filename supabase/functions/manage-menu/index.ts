@@ -31,12 +31,12 @@ Deno.serve(async (req: Request) => {
       let query = supabase
         .from("menu_items")
         .select("*")
-        .is("deleted_at", null)                    // Respect soft delete
+        .is("deleted_at", null)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
 
-      if (search) {
-        query = query.ilike("name", `%${search}%`);
+      if (search?.trim()) {
+        query = query.ilike("name", `%${search.trim()}%`);
       }
 
       if (category && category !== "All") {
@@ -63,22 +63,22 @@ Deno.serve(async (req: Request) => {
     // CREATE ITEM
     // =========================
     if (action === "create") {
-      if (!item?.name || !item?.price) {
-        throw new Error("Name and price are required");
+      if (!item?.name?.trim() || !item?.price) {
+        throw new Error("Item name and price are required");
       }
 
       const payload = {
-        name: item.name,
-        description: item.description || "",
+        name: item.name.trim(),
+        description: item.description?.trim() || null,
         price: Number(item.price),
-        image_url: item.image_url || null,
-        category: item.category || "General",
-        is_available: true,
-        is_featured: item.is_featured ?? false,
-        is_published: item.is_published ?? true,
-        show_on_public: item.show_on_public ?? true,
-        sort_order: Number(item.sort_order ?? 0),
         cost_price: Number(item.cost_price ?? 0),
+        image_url: item.image_url || null,
+        category: item.category?.trim() || "General",
+        is_available: true,
+        is_featured: Boolean(item.is_featured),
+        is_published: Boolean(item.is_published ?? true),
+        show_on_public: Boolean(item.show_on_public ?? true),
+        sort_order: Number(item.sort_order ?? 0),
       };
 
       const { data, error } = await supabase
@@ -93,6 +93,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({
           success: true,
           data,
+          message: "Menu item created successfully",
         }),
         {
           status: 201,
@@ -105,24 +106,28 @@ Deno.serve(async (req: Request) => {
     // UPDATE ITEM
     // =========================
     if (action === "update") {
-      if (!item?.id) throw new Error("Item ID required");
+      if (!item?.id) throw new Error("Item ID is required for update");
+
+      const updatePayload: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      // Only include fields that were sent
+      if (item.name !== undefined) updatePayload.name = item.name.trim();
+      if (item.description !== undefined) updatePayload.description = item.description?.trim() || null;
+      if (item.price !== undefined) updatePayload.price = Number(item.price);
+      if (item.cost_price !== undefined) updatePayload.cost_price = Number(item.cost_price ?? 0);
+      if (item.image_url !== undefined) updatePayload.image_url = item.image_url || null;
+      if (item.category !== undefined) updatePayload.category = item.category.trim();
+      if (item.is_available !== undefined) updatePayload.is_available = Boolean(item.is_available);
+      if (item.is_featured !== undefined) updatePayload.is_featured = Boolean(item.is_featured);
+      if (item.is_published !== undefined) updatePayload.is_published = Boolean(item.is_published);
+      if (item.show_on_public !== undefined) updatePayload.show_on_public = Boolean(item.show_on_public);
+      if (item.sort_order !== undefined) updatePayload.sort_order = Number(item.sort_order);
 
       const { data, error } = await supabase
         .from("menu_items")
-        .update({
-          name: item.name,
-          description: item.description,
-          price: Number(item.price),
-          image_url: item.image_url,
-          category: item.category,
-          is_available: item.is_available,
-          is_featured: item.is_featured,
-          is_published: item.is_published,
-          show_on_public: item.show_on_public,
-          sort_order: Number(item.sort_order ?? 0),
-          cost_price: Number(item.cost_price ?? 0),
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq("id", item.id)
         .select()
         .single();
@@ -130,7 +135,11 @@ Deno.serve(async (req: Request) => {
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, data }),
+        JSON.stringify({
+          success: true,
+          data,
+          message: "Menu item updated successfully",
+        }),
         {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -139,9 +148,41 @@ Deno.serve(async (req: Request) => {
     }
 
     // =========================
-    // TOGGLE AVAILABILITY
+    // SOFT DELETE
+    // =========================
+    if (action === "delete") {
+      if (!id) throw new Error("Item ID is required for deletion");
+
+      const { error } = await supabase
+        .from("menu_items")
+        .update({
+          deleted_at: new Date().toISOString(),
+          is_available: false,
+          is_published: false,
+          show_on_public: false,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Menu item deleted successfully",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // =========================
+    // TOGGLE AVAILABILITY (Legacy support)
     // =========================
     if (action === "toggle-availability") {
+      if (!id) throw new Error("Item ID required");
+
       const { data: existing, error: fetchError } = await supabase
         .from("menu_items")
         .select("is_available")
@@ -161,7 +202,7 @@ Deno.serve(async (req: Request) => {
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ success: true, message: "Availability toggled" }),
         {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -169,40 +210,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // =========================
-    // SOFT DELETE
-    // =========================
-    if (action === "delete") {
-      if (!id) throw new Error("Item ID required");
-
-      const { error } = await supabase
-        .from("menu_items")
-        .update({
-          deleted_at: new Date().toISOString(),
-          is_available: false,
-          is_published: false,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    throw new Error("Invalid action");
+    throw new Error("Invalid action specified");
   } catch (err: any) {
     console.error("MENU FUNCTION ERROR:", err);
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message,
+        error: err.message || "Internal server error",
       }),
       {
         status: 400,
