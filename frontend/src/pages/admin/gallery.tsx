@@ -82,7 +82,7 @@ export default function AdminGallery() {
 
       setDescription("");
       await loadGallery();
-      alert("✅ Image uploaded successfully!");
+      alert("Image uploaded successfully!");
     } catch (err: any) {
       alert("Upload failed: " + err.message);
     } finally {
