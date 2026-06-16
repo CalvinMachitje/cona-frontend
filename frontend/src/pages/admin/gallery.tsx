@@ -4,10 +4,8 @@ import { supabase } from "@/lib/supabase";
 import {
   Upload,
   Trash2,
-  X,
   Image as ImageIcon,
   Loader2,
-  Edit3,
 } from "lucide-react";
 
 type GalleryImage = {
@@ -38,7 +36,7 @@ export default function AdminGallery() {
         .select("*")
         .eq("is_active", true)
         .order("category")
-        .order("sort_order");
+        .order("sort_order", { ascending: true });
 
       if (error) throw error;
       setImages(data || []);
@@ -82,7 +80,7 @@ export default function AdminGallery() {
 
       setDescription("");
       await loadGallery();
-      alert("Image uploaded successfully!");
+      alert("✅ Image uploaded successfully!");
     } catch (err: any) {
       alert("Upload failed: " + err.message);
     } finally {
@@ -202,8 +200,33 @@ export default function AdminGallery() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredImages.length === 0 ? (
-            <div className="col-span-full text-center py-20 text-zinc-400 bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-700">
-              No images in this category yet. Upload some above.
+            <div className="col-span-full bg-zinc-900 border border-dashed border-zinc-700 rounded-3xl p-16 text-center">
+              <ImageIcon className="mx-auto text-zinc-500 mb-6" size={64} />
+              <h4 className="text-2xl font-semibold text-white mb-2">No images found in this category yet.</h4>
+              <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+                Start building your gallery by uploading some beautiful images for{" "}
+                <span className="font-medium text-amber-400">
+                  {selectedCategory === "venue" ? "the venue" : "lifestyle"}
+                </span>.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => document.getElementById("gallery-upload")?.click()}
+                  className="flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-semibold hover:bg-gray-100 transition"
+                >
+                  <Upload size={20} />
+                  Upload First Image
+                </button>
+
+                <button
+                  onClick={() => setSelectedCategory(selectedCategory === "venue" ? "lifestyle" : "venue")}
+                  className="flex items-center justify-center gap-3 border border-zinc-700 hover:bg-zinc-800 px-8 py-4 rounded-2xl font-medium transition"
+                >
+                  Switch to {selectedCategory === "venue" ? "Lifestyle" : "Venue"} Gallery
+                </button>
+              </div>
             </div>
           ) : (
             filteredImages.map((img) => (
@@ -217,15 +240,13 @@ export default function AdminGallery() {
                   className="w-full h-64 object-cover"
                 />
 
-                {/* Description Overlay */}
                 {img.description && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
                     <p className="text-sm text-zinc-300 line-clamp-2">{img.description}</p>
                   </div>
                 )}
 
-                {/* Action Buttons - Now Always Visible with Hover Enhancement */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-90 group-hover:opacity-100 transition-all z-10">
+                <div className="absolute top-3 right-3 z-10">
                   <button
                     onClick={() => deleteImage(img.id)}
                     className="bg-red-600 hover:bg-red-700 p-3 rounded-full text-white shadow-lg transition-all active:scale-95"
