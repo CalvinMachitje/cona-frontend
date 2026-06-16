@@ -1,11 +1,13 @@
 // frontend/src/pages/admin/gallery.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Upload,
   Trash2,
   Image as ImageIcon,
   Loader2,
+  X,
+  Eye,
 } from "lucide-react";
 
 type GalleryImage = {
@@ -22,15 +24,13 @@ export default function AdminGallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const [selectedCategory, setSelectedCategory] = useState<"venue" | "lifestyle">("venue");
   const [description, setDescription] = useState("");
+  const [previewImage, setPreviewImage] = useState<GalleryImage | null>(null);
 
-  const loadGallery = async () => {
+  const loadGallery = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const { data, error } = await supabase
         .from("gallery_images")
         .select("*")
@@ -42,17 +42,16 @@ export default function AdminGallery() {
       setImages(data || []);
     } catch (err: any) {
       console.error(err);
-      setError("Failed to load gallery images");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadGallery();
-  }, []);
+  }, [loadGallery]);
 
-  const uploadGalleryImage = async (file: File) => {
+  const handleUpload = async (file: File) => {
     if (!file) return;
     setUploading(true);
 
@@ -69,14 +68,12 @@ export default function AdminGallery() {
         .from("menu-images")
         .getPublicUrl(fileName);
 
-      const { error: insertError } = await supabase.from("gallery_images").insert({
+      await supabase.from("gallery_images").insert({
         image_url: urlData.publicUrl,
         category: selectedCategory,
         sort_order: images.filter((img) => img.category === selectedCategory).length + 1,
         description: description.trim() || null,
       });
-
-      if (insertError) throw insertError;
 
       setDescription("");
       await loadGallery();
@@ -90,176 +87,176 @@ export default function AdminGallery() {
 
   const deleteImage = async (id: string) => {
     if (!confirm("Delete this gallery image?")) return;
-
     try {
-      const { error } = await supabase
-        .from("gallery_images")
-        .update({ is_active: false })
-        .eq("id", id);
-
-      if (error) throw error;
+      await supabase.from("gallery_images").update({ is_active: false }).eq("id", id);
       await loadGallery();
     } catch (err: any) {
-      alert("Failed to delete image: " + err.message);
+      alert("Delete failed: " + err.message);
     }
   };
 
-  const filteredImages = images.filter((img) => img.category === selectedCategory);
+  const venueImages = images.filter((img) => img.category === "venue");
+  const lifestyleImages = images.filter((img) => img.category === "lifestyle");
+
+  const currentImages = selectedCategory === "venue" ? venueImages : lifestyleImages;
 
   if (loading) {
     return (
-      <div className="p-6 text-white flex items-center">
-        <Loader2 className="animate-spin mr-3" size={24} />
+      <div className="p-6 text-white flex items-center justify-center min-h-[70vh]">
+        <Loader2 className="animate-spin mr-3" size={32} />
         Loading gallery...
       </div>
     );
   }
 
   return (
-    <div className="p-6 text-white space-y-8">
-      <div className="flex justify-between items-center">
+    <div className="p-6 text-white space-y-10">
+      {/* Header */}
+      <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-bold">Gallery Management</h1>
-          <p className="text-zinc-400 mt-1">Manage images shown on the public gallery page</p>
+          <h1 className="text-5xl font-bold tracking-tight">Gallery Management</h1>
+          <p className="text-zinc-400 mt-2 text-lg">Showcase the atmosphere and lifestyle of Cona Lounge</p>
         </div>
       </div>
 
       {/* Category Tabs */}
-      <div className="flex gap-4 border-b border-zinc-800 pb-4">
+      <div className="flex border-b border-zinc-800">
         <button
           onClick={() => setSelectedCategory("venue")}
-          className={`px-8 py-3 rounded-xl font-medium transition-all ${
+          className={`flex-1 py-5 text-center font-semibold text-lg transition-all border-b-4 ${
             selectedCategory === "venue"
-              ? "bg-white text-black"
-              : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
+              ? "border-white text-white"
+              : "border-transparent text-zinc-400 hover:text-white"
           }`}
         >
-          Venue Images
+          VENUE GALLERY ({venueImages.length})
         </button>
         <button
           onClick={() => setSelectedCategory("lifestyle")}
-          className={`px-8 py-3 rounded-xl font-medium transition-all ${
+          className={`flex-1 py-5 text-center font-semibold text-lg transition-all border-b-4 ${
             selectedCategory === "lifestyle"
-              ? "bg-white text-black"
-              : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
+              ? "border-white text-white"
+              : "border-transparent text-zinc-400 hover:text-white"
           }`}
         >
-          Lifestyle Images
+          LIFESTYLE GALLERY ({lifestyleImages.length})
         </button>
       </div>
 
       {/* Upload Section */}
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8">
-        <h3 className="text-xl font-semibold mb-6 flex items-center gap-3">
-          <Upload size={24} /> Upload New Gallery Image
-        </h3>
-
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
-            <label className="block text-sm text-zinc-400 mb-2">Select Image</label>
-            <div className="border-2 border-dashed border-zinc-600 hover:border-amber-400 rounded-2xl p-10 text-center transition">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => e.target.files?.[0] && uploadGalleryImage(e.target.files[0])}
-                className="hidden"
-                id="gallery-upload"
-              />
-              <label htmlFor="gallery-upload" className="cursor-pointer flex flex-col items-center">
-                <ImageIcon className="w-16 h-16 text-zinc-400 mb-4" />
-                <span className="text-white font-medium text-lg">Click or drag image here</span>
-                <span className="text-zinc-500 text-sm mt-2">PNG, JPG, WebP • Recommended max 5MB</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <label className="block text-sm text-zinc-400 mb-2">Description (Optional)</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Main dance floor with VIP seating"
-              className="w-full h-40 p-4 bg-zinc-800 border border-zinc-700 rounded-2xl resize-y focus:border-white focus:outline-none"
-            />
-          </div>
+      <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-10">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold flex items-center gap-3">
+            <Upload size={28} /> Add New {selectedCategory === "venue" ? "Venue" : "Lifestyle"} Image
+          </h3>
         </div>
 
-        {uploading && (
-          <div className="mt-4 flex items-center justify-center gap-3 text-amber-400">
-            <Loader2 className="animate-spin" size={20} />
-            Uploading image...
+        <button
+          onClick={() => document.getElementById("gallery-upload")?.click()}
+          className="w-full py-8 border-2 border-dashed border-zinc-600 hover:border-amber-400 rounded-3xl transition-all hover:bg-zinc-950 group"
+        >
+          <div className="flex flex-col items-center">
+            <Upload className="w-16 h-16 text-zinc-400 group-hover:text-amber-400 transition" />
+            <p className="mt-6 text-xl font-medium">Click to Upload Image</p>
+            <p className="text-zinc-500 mt-1">PNG, JPG, WebP — Recommended size under 5MB</p>
+          </div>
+        </button>
+
+        <input
+          type="file"
+          accept="image/*"
+          id="gallery-upload"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+        />
+
+        {uploading && <p className="text-amber-400 text-center mt-4">Uploading...</p>}
+      </div>
+
+      {/* Description Input */}
+      <div className="max-w-2xl">
+        <label className="block text-sm text-zinc-400 mb-2">Image Description (Optional)</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Short description for this image..."
+          className="w-full h-24 bg-zinc-900 border border-zinc-700 rounded-2xl p-5 focus:border-white resize-y"
+        />
+      </div>
+
+      {/* Images Grid for Selected Category */}
+      <div>
+        <h3 className="text-2xl font-semibold mb-6">
+          {selectedCategory === "venue" ? "Venue" : "Lifestyle"} Images • {currentImages.length} total
+        </h3>
+
+        {currentImages.length === 0 ? (
+          <div className="bg-zinc-900 border border-dashed border-zinc-700 rounded-3xl p-20 text-center">
+            <ImageIcon className="mx-auto text-zinc-500 mb-6" size={80} />
+            <h4 className="text-3xl font-semibold">No images in this category yet</h4>
+            <p className="text-zinc-400 mt-4">Use the upload button above to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentImages.map((img) => (
+              <div
+                key={img.id}
+                className="group relative bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 hover:border-amber-400 transition-all cursor-pointer"
+                onClick={() => setPreviewImage(img)}
+              >
+                <img
+                  src={img.image_url}
+                  alt={img.description || ""}
+                  className="w-full aspect-video object-cover"
+                />
+
+                {img.description && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-5">
+                    <p className="text-sm text-white line-clamp-2">{img.description}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteImage(img.id);
+                  }}
+                  className="absolute top-4 right-4 bg-red-600/90 hover:bg-red-700 p-3 rounded-full text-white opacity-0 group-hover:opacity-100 transition z-10"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Current Images Grid */}
-      <div>
-        <h3 className="text-xl font-semibold mb-6">
-          Current {selectedCategory === "venue" ? "Venue" : "Lifestyle"} Images ({filteredImages.length})
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredImages.length === 0 ? (
-            <div className="col-span-full bg-zinc-900 border border-dashed border-zinc-700 rounded-3xl p-16 text-center">
-              <ImageIcon className="mx-auto text-zinc-500 mb-6" size={64} />
-              <h4 className="text-2xl font-semibold text-white mb-2">No images found in this category yet.</h4>
-              <p className="text-zinc-400 mb-8 max-w-md mx-auto">
-                Start building your gallery by uploading some beautiful images for{" "}
-                <span className="font-medium text-amber-400">
-                  {selectedCategory === "venue" ? "the venue" : "lifestyle"}
-                </span>.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => document.getElementById("gallery-upload")?.click()}
-                  className="flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-semibold hover:bg-gray-100 transition"
-                >
-                  <Upload size={20} />
-                  Upload First Image
-                </button>
-
-                <button
-                  onClick={() => setSelectedCategory(selectedCategory === "venue" ? "lifestyle" : "venue")}
-                  className="flex items-center justify-center gap-3 border border-zinc-700 hover:bg-zinc-800 px-8 py-4 rounded-2xl font-medium transition"
-                >
-                  Switch to {selectedCategory === "venue" ? "Lifestyle" : "Venue"} Gallery
-                </button>
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-6"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="max-w-4xl w-full relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-5 -right-5 bg-zinc-900 p-4 rounded-full text-white hover:bg-zinc-800"
+            >
+              <X size={28} />
+            </button>
+            <img
+              src={previewImage.image_url}
+              alt={previewImage.description}
+              className="w-full rounded-3xl shadow-2xl"
+            />
+            {previewImage.description && (
+              <div className="mt-8 bg-zinc-900 p-8 rounded-2xl">
+                <p className="text-lg leading-relaxed">{previewImage.description}</p>
               </div>
-            </div>
-          ) : (
-            filteredImages.map((img) => (
-              <div
-                key={img.id}
-                className="relative group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-600 transition-all duration-200"
-              >
-                <img
-                  src={img.image_url}
-                  alt={img.description || "Gallery Image"}
-                  className="w-full h-64 object-cover"
-                />
-
-                {img.description && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
-                    <p className="text-sm text-zinc-300 line-clamp-2">{img.description}</p>
-                  </div>
-                )}
-
-                <div className="absolute top-3 right-3 z-10">
-                  <button
-                    onClick={() => deleteImage(img.id)}
-                    className="bg-red-600 hover:bg-red-700 p-3 rounded-full text-white shadow-lg transition-all active:scale-95"
-                    title="Delete Image"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

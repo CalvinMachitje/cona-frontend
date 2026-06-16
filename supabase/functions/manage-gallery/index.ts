@@ -37,7 +37,10 @@ Deno.serve(async (req: Request) => {
       if (error) throw error;
 
       return Response.json(
-        { success: true, data: data ?? [] },
+        { 
+          success: true, 
+          data: data ?? [] 
+        },
         { headers: corsHeaders }
       );
     }
@@ -46,13 +49,13 @@ Deno.serve(async (req: Request) => {
     // CREATE NEW GALLERY IMAGE
     // =========================
     if (action === "create") {
-      if (!image_url || !category) {
+      if (!image_url?.trim() || !category) {
         throw new Error("image_url and category are required");
       }
 
       const payload = {
-        image_url,
-        category,
+        image_url: image_url.trim(),
+        category: category.trim(),
         description: description?.trim() || null,
         sort_order: Number(sort_order ?? 0),
         is_active: true,
