@@ -34,7 +34,9 @@ import Bookings from "@/pages/admin/bookings";
 import Payments from "@/pages/admin/payments";
 import AdminLogin from "@/pages/admin/login";
 import AdminRegister from "@/pages/admin/register";
-import AdminGallery from "./pages/admin/gallery";
+import AdminGallery from "@/pages/admin/gallery";
+import AdminMenu from "@/pages/admin/menu";
+
 
 function App() {
   return (
@@ -69,13 +71,12 @@ function App() {
         <Route element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="gallery" element={<Gallery />} />
-          <Route path="menu" element={<Menu />} />
+          <Route path="menu" element={<AdminMenu />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="customers" element={<Users />} />
           <Route path="payments" element={<Payments />} />
           <Route path="settings" element={<Settings />} />
-          <Route path="/admin/gallery" element={<AdminGallery />} />
+          <Route path="gallery" element={<AdminGallery />} />
         </Route>
       </Route>
     </Routes>
